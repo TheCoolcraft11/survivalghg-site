@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+</head>
+
+<body>
+    <h1>User Profile</h1>
+    <div id="profileInfo">
+        <!-- User profile information will be displayed here -->
+    </div>
+    <button id="logoutButton">Logout</button>
+    <button id="adminButton" style="display: none;">Admin Action</button>
+
+    <script>
+        let userInfo;
+
+        async function fetchProfile() {
+            const token = sessionStorage.getItem('authToken');
+
+            if (!token) {
+                alert('You need to log in first');
+                window.location.href = '/index.html';
+                return;
+            }
+
+            const response = await fetch('/profile', {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                userInfo = data.message;
+
+                document.getElementById('profileInfo').textContent = `Welcome, ${userInfo.username}`;
+
+                if (userInfo.role === 'admin') {
+                    document.getElementById('adminButton').style.display = 'block';
+                }
+            } else {
+                alert('Failed to fetch profile');
+                window.location.href = '/index.html';
+            }
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            sessionStorage.removeItem('authToken');
+            window.location.href = '/index.html';
+        });
+
+        document.getElementById('adminButton').addEventListener('click', async () => {
+            const token = sessionStorage.getItem('authToken');
+
+            const response = await fetch('/admin-action', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.message);
+            } else {
+                alert('Failed to perform admin action');
+            }
+        });
+
+        fetchProfile();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<noscript>You need to enabled java script in order to run this site</noscript>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="login.html">Login</a></li>
+        <li><a href="profile.html">Profile</a></li>
+    </ul>
+    <div class="console" id="console">
+    </div>
+
+    <div class="button-container">
+        <div class="text-box">
+            <a href="#" class="btn btn-animate btn-start">Start</a>
+        </div>
+        <div class="text-box">
+            <a href="#" class="btn btn-animate btn-restart">Restart</a>
+        </div>
+        <div class="text-box">
+            <a href="#" class="btn btn-animate btn-stop">Stop</a>
+        </div>
+        <div class="text-box">
+            <a href="#" class="btn btn-animate btn-kill">Kill</a>
+        </div>
+    </div>
+    <div>
+        <form onsubmit="sendCommand(event)">
+            <input type="text" name="command" placeholder="/ Enter Command" required class="command-label" />
+        </form>
+    </div>
+</body>
+<script>
+    let socket;
+
+    function connectWebSocket() {
+
+        socket = new WebSocket(`ws://mode-reminder.gl.at.ply.gg:52773`);
+
+        socket.onmessage = function (event) {
+            const outputDiv = document.getElementById('console');
+            outputDiv.textContent += event.data;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        };
+
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onclose = function () {
+            console.log('WebSocket connection closed. Reconnecting in 1 second...');
+            setTimeout(connectWebSocket, 1000);
+        };
+    }
+
+    function sendCommand(event) {
+        event.preventDefault();
+
+        const commandInput = document.querySelector('input[name="command"]');
+        const command = commandInput.value;
+        const token = sessionStorage.getItem('authToken');
+        if (token != null) {
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `command=${encodeURIComponent(command)}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        //console.log(response.json())
+
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'An unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.type == 'Not Running') {
+                        alert('Server is currently not running');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                })
+                .finally(() => {
+                    commandInput.value = '';
+                });
+        } else {
+            alert('You need to be logged in to do that!');
+            commandInput.value = '';
+        }
+    }
+
+    async function getPublicIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            console.error('Error fetching IP address:', error);
+            return null;
+        }
+    }
+
+    async function sendIPToServer(ip) {
+        try {
+            await fetch('/api/receive-ip', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ip })
+            });
+
+        } catch (error) {
+            console.error('Error sending IP address to server:', error);
+
+        }
+    }
+
+    async function initialize() {
+        const ip = await getPublicIP();
+        if (ip) {
+            await sendIPToServer(ip);
+        }
+        connectWebSocket;
+    }
+    window.onload = connectWebSocket;
+    initialize();
+</script>
+
+</html>
