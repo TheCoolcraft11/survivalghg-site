@@ -19,7 +19,7 @@ const screenSessionName = 'ScreenTest';
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'max',
-    password: 'MinecraftGHG24!',
+
     database: 'mcUsers'
 });
 
