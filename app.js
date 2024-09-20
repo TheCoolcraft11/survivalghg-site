@@ -11,17 +11,19 @@ const net = require('net');
 const axios = require('axios');
 const crypto = require('crypto');
 const useragent = require('useragent');
+require('dotenv').config();
 
 const app = express();
 const logFilePath = '/home/max/Test/logs/latest.log';
 const screenSessionName = 'ScreenTest';
 
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'max',
-
-    database: 'mcUsers'
+    host: process.env.HOST,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE
 });
+
 
 db.connect(err => {
     if (err) {
