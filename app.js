@@ -157,6 +157,31 @@ app.post('/send', authenticateToken, (req, res) => {
     });
 });
 
+app.post('/kill', authenticateToken, (req, res) => {
+
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access forbidden: Admins only' });
+    }
+
+    isMinecraftServerRunning(isRunning => {
+        if (isRunning) {
+            const command = req.body.command;
+            const exec = require('child_process').exec;
+
+            exec(`pkill -f server.jar \n"`, (err) => {
+                if (err) {
+                    console.error(`Error executing command: ${err}`);
+                    return res.send('Error sending command');
+                } else {
+                    res.status(200).json({ message: `Executed command: ` + command });
+                }
+            });
+        } else {
+            res.status(200).json({ type: 'Not Running', message: 'Minecraft server is not running' })
+        }
+    });
+});
+
 app.post('/start', (req, res) => {
     isMinecraftServerRunning(isRunning => {
         const exec = require('child_process').exec;
@@ -314,9 +339,7 @@ app.get('/profile', authenticateToken, (req, res) => {
 });
 
 
-app.get('/get-profile', authenticateToken, (req, res) => {
-    res.json({ message: { username: req.user.username, role: req.user.role } });
-});
+
 
 app.post('/admin-action', authenticateToken, (req, res) => {
 
@@ -334,4 +357,75 @@ app.post('/api/receive-ip', (req, res) => {
     logUserData(req, ip)
 
     res.status(200).send('IP address received');
+});
+
+const multer = require('multer');
+
+// Define storage for the profile pictures
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/profile-pictures'); // Directory where profile pictures will be stored
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Set up multer upload with file size limit and filter for image types
+const uploadProfilePic = multer({
+    storage: storage,
+    limits: { fileSize: 1000000 }, // 1MB file limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb('Error: Only images are allowed');
+        }
+    }
+});
+
+app.post('/upload-profile-picture', authenticateToken, uploadProfilePic.single('profilePicture'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded or invalid file type' });
+    }
+
+    const profilePicPath = '/uploads/profile-pictures/' + req.file.filename;
+
+    // Update the user's profile picture in the database
+    db.query('UPDATE users SET profile_picture = ? WHERE id = ?', [profilePicPath, req.user.id], (err, result) => {
+        if (err) {
+            console.error('Error updating profile picture:', err.message);
+            return res.status(500).json({ message: 'Error updating profile picture' });
+        }
+
+        res.status(200).json({ message: 'Profile picture updated successfully', profilePicture: profilePicPath });
+    });
+});
+
+app.use('/uploads', express.static('uploads'));
+
+app.get('/api/profile', authenticateToken, (req, res) => {
+    db.query('SELECT username, role, profile_picture FROM users WHERE id = ?', [req.user.id], (err, results) => {
+        if (err) {
+            console.error('Error retrieving profile:', err.message);
+            return res.status(500).json({ message: 'Error retrieving profile' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const user = results[0];
+        res.json({
+            message: {
+                username: user.username,
+                role: user.role,
+                profile_picture: user.profile_picture || '/uploads/profile-pictures/default.jpg'
+            }
+        });
+    });
 });

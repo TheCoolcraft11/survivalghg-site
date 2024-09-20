@@ -30,13 +30,16 @@
                         class="btn btn-animate btn-start">Start</a>
                 </div>
                 <div class="text-box">
-                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-restart">Restart</a>
+                    <a href="#" onclick="return false;" type="button" id="btn-restart"
+                        class="btn btn-animate btn-restart">Restart</a>
                 </div>
                 <div class="text-box">
-                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-stop">Stop</a>
+                    <a href="#" onclick="return false;" type="button" id="btn-stop"
+                        class="btn btn-animate btn-stop">Stop</a>
                 </div>
                 <div class="text-box">
-                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-kill">Kill</a>
+                    <a href="#" onclick="return false;" type="button" id="btn-kill"
+                        class="btn btn-animate btn-kill">Kill</a>
                 </div>
             </div>
         </div>
@@ -85,7 +88,6 @@
             })
                 .then(response => {
                     if (!response.ok) {
-                        //console.log(response.json())
 
                         return response.json().then(errorData => {
                             throw new Error(errorData.message || 'An unknown error occurred');
@@ -160,6 +162,152 @@
         )
     });
 
+    document.getElementById('btn-stop').addEventListener('click', async (e) => {
+        const token = sessionStorage.getItem('authToken');
+        if (token != null) {
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `command=stop`
+            })
+                .then(response => {
+                    if (!response.ok) {
+
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'An unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.type == 'Not Running') {
+                        alert('Server is currently not running');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                })
+                .finally(() => {
+                    commandInput.value = '';
+                });
+        } else {
+            alert('You need to be logged in to do that!');
+            commandInput.value = '';
+        }
+    });
+
+
+    document.getElementById('btn-restart').addEventListener('click', async (e) => {
+        const token = sessionStorage.getItem('authToken');
+        if (token != null) {
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `command=restart`
+            })
+                .then(response => {
+                    if (!response.ok) {
+
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'An unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.type == 'Not Running') {
+                        alert('Server is currently not running');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                })
+                .finally(() => {
+                    commandInput.value = '';
+                });
+        } else {
+            alert('You need to be logged in to do that!');
+            commandInput.value = '';
+        }
+    });
+    document.getElementById('btn-restart').addEventListener('click', async (e) => {
+        const token = sessionStorage.getItem('authToken');
+        if (token != null) {
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `command=restart`
+            })
+                .then(response => {
+                    if (!response.ok) {
+
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'An unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.type == 'Not Running') {
+                        alert('Server is currently not running');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                })
+                .finally(() => {
+                    commandInput.value = '';
+                });
+        } else {
+            alert('You need to be logged in to do that!');
+            commandInput.value = '';
+        }
+    });
+    document.getElementById('btn-kill').addEventListener('click', async (e) => {
+        const token = sessionStorage.getItem('authToken');
+        if (token != null) {
+            fetch('/kill', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `command=restart`
+            })
+                .then(response => {
+                    if (!response.ok) {
+
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'An unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.type == 'Not Running') {
+                        alert('Server is currently not running');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                })
+                .finally(() => {
+                    commandInput.value = '';
+                });
+        } else {
+            alert('You need to be logged in to do that!');
+            commandInput.value = '';
+        }
+    });
 </script>
 
 </html>

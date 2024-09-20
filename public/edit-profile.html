@@ -1,0 +1,29 @@
+<form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="profilePicture" accept="image/*">
+    <button type="submit">Upload Profile Picture</button>
+</form>
+
+<img id="profilePic" src="/uploads/profile-pictures/default.jpg" alt="Profile Picture">
+
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const token = sessionStorage.getItem('authToken');
+
+        const formData = new FormData(this);
+        fetch('/upload-profile-picture', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.profilePicture) {
+                    document.getElementById('profilePic').src = data.profilePicture;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+</script>

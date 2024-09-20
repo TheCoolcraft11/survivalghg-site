@@ -5,32 +5,160 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login and Registration</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            display: none;
+
+        }
+
+        #loginForm {
+            display: block;
+
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #007BFF;
+        }
+
+        button {
+
+            padding: 12px;
+            background-color: #004288;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #007bff;
+        }
+
+
+        .toggle-button {
+            margin-top: 20px;
+            background-color: transparent;
+            color: #007BFF;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .toggle-button:hover {
+            color: #0056b3;
+        }
+
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            form {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Register</h1>
-    <form id="registerForm">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-        <label for="role">Role:</label>
-        <select id="role" name="role" required>
-            <option value="user">User</option>
-        </select><br>
-        <button type="submit">Register</button>
-    </form>
+    <h1 id="form-header">Login</h1>
 
-    <h1>Login</h1>
     <form id="loginForm">
         <label for="loginUsername">Username:</label>
-        <input type="text" id="loginUsername" name="username" required><br>
+        <input type="text" id="loginUsername" name="username" required>
         <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" name="password" required><br>
+        <input type="password" id="loginPassword" name="password" required>
         <button type="submit">Login</button>
     </form>
 
+    <form id="registerForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+            <option value="user">User</option>
+        </select>
+        <button type="submit">Register</button>
+    </form>
+
+
+    <button class="toggle-button" id="toggleButton">Don't have an account? Register here</button>
+
     <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const toggleButton = document.getElementById('toggleButton');
+        const formHeader = document.getElementById('form-header');
+
+
+        toggleButton.addEventListener('click', () => {
+            if (loginForm.style.display === "none") {
+                loginForm.style.display = "block";
+                registerForm.style.display = "none";
+                formHeader.textContent = "Login";
+                toggleButton.textContent = "Don't have an account? Register here";
+            } else {
+                loginForm.style.display = "none";
+                registerForm.style.display = "block";
+                formHeader.textContent = "Register";
+                toggleButton.textContent = "Already have an account? Login here";
+            }
+        });
+
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -46,6 +174,7 @@
             const result = await response.json();
             alert(result.message);
         });
+
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
