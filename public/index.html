@@ -10,41 +10,47 @@
 </head>
 
 <body>
-    <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="#">Contact</a></li>
-        <li><a href="login.html">Login</a></li>
-        <li><a href="profile.html">Profile</a></li>
-    </ul>
-    <div class="console" id="console">
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="/">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </nav>
+    <div>
+        <div class="console" id="console"></div>
+        <div>
+            <form onsubmit="sendCommand(event)">
+                <input type="text" name="command" placeholder="/ Enter Command" required class="command-label" />
+            </form>
+            <div class="button-container">
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-start"
+                        class="btn btn-animate btn-start">Start</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-restart">Restart</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-stop">Stop</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" class="btn btn-animate btn-kill">Kill</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="button-container">
-        <div class="text-box">
-            <a href="#" class="btn btn-animate btn-start">Start</a>
-        </div>
-        <div class="text-box">
-            <a href="#" class="btn btn-animate btn-restart">Restart</a>
-        </div>
-        <div class="text-box">
-            <a href="#" class="btn btn-animate btn-stop">Stop</a>
-        </div>
-        <div class="text-box">
-            <a href="#" class="btn btn-animate btn-kill">Kill</a>
-        </div>
-    </div>
-    <div>
-        <form onsubmit="sendCommand(event)">
-            <input type="text" name="command" placeholder="/ Enter Command" required class="command-label" />
-        </form>
-    </div>
+
+
 </body>
 <script>
     let socket;
 
     function connectWebSocket() {
 
-        socket = new WebSocket(`ws://mode-reminder.gl.at.ply.gg:52773`);
+        socket = new WebSocket(`ws:` + window.location.origin.replace("http://", "").replace("https://", ""));
 
         socket.onmessage = function (event) {
             const outputDiv = document.getElementById('console');
@@ -140,6 +146,20 @@
     }
     window.onload = connectWebSocket;
     initialize();
+
+    document.getElementById('btn-start').addEventListener('click', async (e) => {
+        fetch('/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+
+            },
+        }).then(() => {
+            setTimeout(connectWebSocket(), 2000);
+        }
+        )
+    });
+
 </script>
 
 </html>

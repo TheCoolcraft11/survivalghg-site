@@ -155,6 +155,41 @@ app.post('/send', authenticateToken, (req, res) => {
     });
 });
 
+app.post('/start', (req, res) => {
+    isMinecraftServerRunning(isRunning => {
+        const exec = require('child_process').exec;
+        if (!isRunning) {
+            const command = req.body.command;
+
+            exec(`screen -list`, (err, stdout, stderr) => {
+                console.log("Err: " + err, " StO: " + stdout, " StE: " + stderr + " - " + (!stdout.includes(screenSessionName) || stdout.includes('No Sockets found in')))
+
+                if (!stdout.includes(screenSessionName) || stdout.includes('No Sockets found in')) {
+                    exec(`screen -S ${screenSessionName} -d -m`, (err) => {
+                        if (err) {
+                            console.error(`Error creating screen session: ${err}`);
+                            return res.send('Error starting Minecraft server');
+                        } else {
+                            res.status(200).json({ message: `Started Minecraft server in new screen session` });
+                        }
+                    });
+                }
+                exec(`screen -S ${screenSessionName} -X stuff "java -jar server.jar\n"`, (err) => {
+                    if (err) {
+                        console.error(`Error executing command: ${err}`);
+                        return res.send('Error sending command');
+                    } else {
+                        res.status(200).json({ message: `Executed command: ` + command });
+                    }
+                });
+
+            });
+        } else {
+            res.status(200).json({ type: 'Not Running', message: 'Minecraft server is not running' });
+        }
+    });
+});
+
 function isMinecraftServerRunning(callback) {
     const port = 25565;
     const host = 'localhost';
