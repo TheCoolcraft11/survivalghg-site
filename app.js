@@ -11,6 +11,10 @@ const net = require('net');
 const axios = require('axios');
 const crypto = require('crypto');
 const useragent = require('useragent');
+const multer = require('multer');
+const os = require('os');
+const si = require('systeminformation');
+
 require('dotenv').config();
 
 const app = express();
@@ -196,8 +200,6 @@ app.post('/start', (req, res) => {
                         if (err) {
                             console.error(`Error creating screen session: ${err}`);
                             return res.send('Error starting Minecraft server');
-                        } else {
-                            res.status(200).json({ message: `Started Minecraft server in new screen session` });
                         }
                     });
                 }
@@ -359,7 +361,7 @@ app.post('/api/receive-ip', (req, res) => {
     res.status(200).send('IP address received');
 });
 
-const multer = require('multer');
+
 
 // Define storage for the profile pictures
 const storage = multer.diskStorage({
@@ -428,4 +430,112 @@ app.get('/api/profile', authenticateToken, (req, res) => {
             }
         });
     });
+})
+app.post('/update-name', authenticateToken, (req, res) => {
+    const { name } = req.body;
+    const userId = req.user.id;
+
+    if (!name) {
+        return res.status(400).json({ message: 'Name is required' });
+    }
+
+
+    db.query('UPDATE users SET username = ? WHERE id = ?', [name, userId], (err, result) => {
+        if (err) {
+            console.error('Error updating name:', err);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+        res.json({ success: true, message: 'Name updated successfully' });
+    });
+});
+
+
+app.post('/update-password', authenticateToken, async (req, res) => {
+    const { password } = req.body;
+    const userId = req.user.id;
+
+    if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
+    }
+
+    try {
+
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+
+        db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], (err, result) => {
+            if (err) {
+                console.error('Error updating password:', err);
+                return res.status(500).json({ success: false, message: 'Internal Server Error' });
+            }
+            res.json({ success: true, message: 'Password updated successfully' });
+        });
+    } catch (error) {
+        console.error('Error hashing password:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
+
+
+app.get('/api/info', async (req, res) => {
+    try {
+        // Get CPU Info
+        const cpu = await si.cpu();
+        const cpuLoad = await si.currentLoad(); // Get current CPU load
+
+        // Get RAM Info
+        const memory = await si.mem();
+        const usedMemory = memory.total - memory.free; // Calculate used memory
+
+        // Get Disk Info
+        const disks = await si.diskLayout();
+        const diskInfo = await si.fsSize();
+
+        const disksWithUsage = disks.map((disk, index) => {
+            const used = diskInfo[index] ? diskInfo[index].used : 0;
+            return {
+                name: disk.name,
+                size: (disk.size / 1024 / 1024 / 1024).toFixed(2) + ' GB',
+                used: (used / 1024 / 1024 / 1024).toFixed(2) + ' GB'
+            };
+        });
+
+        // Get Network Stats
+        const networkStats = await si.networkStats();
+
+        // Prepare network traffic data
+        const networkTraffic = networkStats.map(iface => ({
+            iface: iface.iface,
+            mac: iface.mac || 'N/A',
+            ip: iface.ip4 || 'N/A',
+            ip6: iface.ip4 || 'N/A',
+            tx_bytes: iface.tx_bytes || 0,
+            rx_bytes: iface.rx_bytes || 0,
+            upload: (iface.tx_bytes / 1024 / 1024).toFixed(2) + ' MB', // Convert to MB
+            download: (iface.rx_bytes / 1024 / 1024).toFixed(2) + ' MB', // Convert to MB
+        }));
+
+        // Prepare response data
+        const systemInfo = {
+            cpu: {
+                manufacturer: cpu.manufacturer,
+                brand: cpu.brand,
+                cores: cpu.cores,
+                usage: cpuLoad.currentLoad.toFixed(2), // CPU usage percentage
+            },
+            memory: {
+                total: (memory.total / 1024 / 1024).toFixed(2) + ' MB',
+                used: (usedMemory / 1024 / 1024).toFixed(2) + ' MB',
+            },
+            disks: disksWithUsage,
+            network: networkTraffic
+        };
+
+        res.json(systemInfo);
+    } catch (error) {
+        console.error('Error fetching system info:', error);
+        res.status(500).json({ error: 'Failed to fetch system info' });
+    }
 });

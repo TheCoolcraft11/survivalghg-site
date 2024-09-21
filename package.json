@@ -22,7 +22,9 @@
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.3",
     "net": "^1.0.2",
+    "os-utils": "^0.0.14",
     "path": "^0.12.7",
+    "systeminformation": "^5.23.5",
     "useragent": "^2.3.0",
     "ws": "^8.18.0"
   }
