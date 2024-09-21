@@ -71,10 +71,59 @@
         .info-text {
             margin: 10px 0;
         }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 0.6rem 2rem;
+            display: flex;
+            justify-content: center;
+            background-color: rgba(28, 28, 28, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-left {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-left li {
+            font-size: 1.2rem;
+        }
+
+        .nav-left a {
+            text-decoration: none;
+            color: #fff;
+            transition: color 0.5s, border-bottom 0.5s;
+            padding-bottom: 5px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .nav-left a:hover {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .nav-left .active {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
     </style>
 </head>
 
 <body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="/console.html">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </nav>
     <h1>System Information</h1>
     <div class="container" id="info"></div>
 

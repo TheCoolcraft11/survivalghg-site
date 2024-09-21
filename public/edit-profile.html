@@ -39,9 +39,9 @@
             <button type="submit">Update Password</button>
         </form>
     </div>
-
-    <script src="scripts.js"></script>
-
+    <div class="profile-actions">
+        <button class="back">Back</button>
+    </div>
 </body>
 
 </html>
@@ -147,18 +147,22 @@
             })
             .catch(error => console.error('Error:', error));
     });
-
+    document.querySelector('.back').addEventListener('click', () => {
+        window.location.href = '/profile.html';
+    });
 </script>
 <style>
     body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
         margin: 0;
         padding: 0;
+        background-image: url('./images/bg.png');
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        min-height: 100vh;
     }
 
     .profile-container {
@@ -263,5 +267,26 @@
         .profile-container {
             padding: 10px;
         }
+    }
+
+    .profile-actions button.back {
+        background-color: #FF4B4B;
+    }
+
+    .profile-actions button.back:hover {
+        background-color: #D73838;
+    }
+
+    .back {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s;
     }
 </style>

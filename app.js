@@ -1,5 +1,4 @@
-const express = require('express');
-const fs = require('fs');
+const express = require('express'); const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 const cors = require('cors');
@@ -46,7 +45,7 @@ function generateUniqueId(ip, userAgentString) {
 }
 
 
-async function logUserData(req, ip) {
+async function logUserData(req, ip, url) {
     //const ip = [
     //req.headers['cf-connecting-ip'],
     //req.headers['x-real-ip'],
@@ -67,6 +66,7 @@ async function logUserData(req, ip) {
     }
 
     const userData = {
+        url,
         userId,
         ip,
         city,
@@ -354,9 +354,10 @@ app.post('/admin-action', authenticateToken, (req, res) => {
 });
 app.post('/api/receive-ip', (req, res) => {
     const { ip } = req.body;
+    const { url } = req.body;
 
 
-    logUserData(req, ip)
+    logUserData(req, ip, url)
 
     res.status(200).send('IP address received');
 });
@@ -539,3 +540,39 @@ app.get('/api/info', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch system info' });
     }
 });
+
+// Define storage for the profile pictures
+const storage2 = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/screenshots'); // Directory where profile pictures will be stored
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// Set up multer upload with file size limit and filter for image types
+const screenshotStorage = multer({
+    storage: storage2,
+    limits: { fileSize: 1000000 }, // 1MB file limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb('Error: Only images are allowed');
+        }
+    }
+});
+
+app.post('/api/upload-screenshot', screenshotStorage.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+    console.log(`Uploaded file: ${req.file.filename}`);
+    res.status(200).send('File uploaded successfully.');
+});
+

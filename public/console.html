@@ -6,14 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Console</title>
-    <link href="styles.css" rel="stylesheet">
 </head>
 
 <body>
     <nav class="navbar">
-        <ul class="nav-links">
-            <li><a href="/" class="active">Home</a></li>
-            <li><a href="/">Server</a></li>
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a href="/console.html" class="active">Server</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="profile.html">Profile</a></li>
         </ul>
@@ -123,14 +122,14 @@
         }
     }
 
-    async function sendIPToServer(ip) {
+    async function sendIPToServer(ip, url) {
         try {
             await fetch('/api/receive-ip', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ ip })
+                body: JSON.stringify({ ip, url })
             });
 
         } catch (error) {
@@ -142,7 +141,7 @@
     async function initialize() {
         const ip = await getPublicIP();
         if (ip) {
-            await sendIPToServer(ip);
+            await sendIPToServer(ip, window.location.href);
         }
         connectWebSocket;
     }
@@ -497,17 +496,17 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .nav-links {
+    .nav-left {
         list-style: none;
         display: flex;
         gap: 2rem;
     }
 
-    .nav-links li {
+    .nav-left li {
         font-size: 1.2rem;
     }
 
-    .nav-links a {
+    .nav-left a {
         text-decoration: none;
         color: #fff;
         transition: color 0.5s, border-bottom 0.5s;
@@ -515,12 +514,12 @@
         font-family: 'Roboto', sans-serif;
     }
 
-    .nav-links a:hover {
+    .nav-left a:hover {
         color: #4db1ff;
         border-bottom: 2px solid #4db1ff;
     }
 
-    .nav-links .active {
+    .nav-left .active {
         color: #4db1ff;
         border-bottom: 2px solid #4db1ff;
     }
