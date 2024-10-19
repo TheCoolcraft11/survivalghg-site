@@ -1,0 +1,258 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a href="/console.html">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#" class="active">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal.html" class="active">Linux</a>
+                    <a href="users.html">Users</a>
+                    <a href="user-management.html">User Management</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+
+    <div id="terminal"></div>
+
+    <div id="unauthorized-message">
+        <a id="unauthorized-message-text"></a>
+        <button id="reconnectButton" onclick="location.reload()">Reconnect</button>
+    </div>
+</body>
+
+<script>
+    const token = sessionStorage.getItem('authToken');
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    if (token) {
+        const userData = parseJwt(token);
+        if (userData && userData.role === 'admin') {
+            document.getElementById('adminDropdown').style.display = 'block';
+        }
+    }
+
+    const terminal = new Terminal();
+    terminal.open(document.getElementById('terminal'));
+
+    const socket = new WebSocket(`ws://${window.location.host}`.replace(":3000", ":8081") + `?token=${token}`);
+
+    socket.onmessage = (event) => {
+        terminal.write(event.data);
+
+    };
+
+    terminal.onData(data => {
+        socket.send(data);
+    });
+
+    socket.onclose = (event) => {
+        if (event.code == 3003) {
+            console.error('Failed to connect: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message').innerHTML = "Forbidden: Only Admins can access this.";
+        } else if (event.code == 3000) {
+            console.error('Failed to connect: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "Unauthorized: You do not have permission to access this.";
+        } else if (event.code == 4001) {
+            console.log('Session ended: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('unauthorized-message').style.border = '2px solid #ffb300';
+            document.getElementById('unauthorized-message').style.color = '#ffb300';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "Session ended due to inactivity";
+        } if (event.code == 1006) {
+            console.log('Session ended: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "Couldn't connect to session";
+        } else if (event.code == 1000) {
+            console.log('Session ended: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('unauthorized-message').style.border = '2px solid #1aff00';
+            document.getElementById('unauthorized-message').style.color = '#1aff00';
+            document.getElementById('unauthorized-message').style.backgroundColor = '#e2fdd7';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "You have ended the session";
+        } else if (event.code == 1011) {
+            console.log('Session ended: ' + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "Server Error";
+        } else {
+            console.log('Unexpected End with Code:' + event.code + " with message: " + event.reason);
+            document.getElementById('unauthorized-message').style.display = 'block';
+            document.getElementById('terminal').style.display = 'none';
+            document.getElementById('unauthorized-message-text').innerHTML = "Unexpected Error";
+        }
+    };
+
+
+    window.addEventListener('resize', () => {
+        const width = Math.floor(window.innerWidth / 20);
+        const height = Math.floor(window.innerHeight / 30);
+        terminal.resize(width, height);
+    });
+
+    window.onload = terminal.resize(Math.floor(window.innerWidth / 20), Math.floor(window.innerHeight / 30));
+</script>
+<style>
+    #reconnectButton {
+        margin-top: 10px;
+        padding: 10px 15px;
+        margin: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    #reconnectButton:hover {
+        background-color: #45a049;
+    }
+
+    #unauthorized-message {
+        display: none;
+        width: 80%;
+        padding: 20px;
+        margin-top: 20px;
+        border: 2px solid #ff4d4d;
+        border-radius: 10px;
+        background-color: #fffbe6;
+        color: #d9534f;
+        text-align: center;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    #terminal {
+        margin-top: 60px;
+        border: 2px solid #4db1ff;
+        border-radius: 15px;
+        overflow: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+    }
+
+
+
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-image: url('./images/bg.png');
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+    .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        padding: 0.6rem 2rem;
+        display: flex;
+        justify-content: center;
+        background-color: rgba(28, 28, 28, 0.6);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-left {
+        list-style: none;
+        display: flex;
+        gap: 2rem;
+    }
+
+    .nav-left li {
+        font-size: 1.2rem;
+    }
+
+    .nav-left a {
+        text-decoration: none;
+        color: #fff;
+        transition: color 0.5s, border-bottom 0.5s;
+        padding-bottom: 5px;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .nav-left a:hover {
+        color: #4db1ff;
+        border-bottom: 2px solid #4db1ff;
+    }
+
+    .nav-left .active {
+        color: #4db1ff;
+        border-bottom: 2px solid #4db1ff;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #444;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        margin-top: 0.5rem;
+        min-width: 160px;
+    }
+
+    .dropdown-content a {
+        color: white;
+        padding: 0.5rem 1rem;
+        display: block;
+        text-decoration: none;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #555;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+</style>
+
+</html>

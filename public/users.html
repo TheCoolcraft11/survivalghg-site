@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            top: 50px;
+        }
+
+        h2 {
+            color: #4CAF50;
+            margin-left: 20px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            display: inline-block;
+            width: 100px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: calc(100% - 120px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: auto;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background-color: #d32f2f;
+        }
+
+        table td form {
+            display: inline-block;
+        }
+
+        table td form select {
+            width: auto;
+            padding: 5px;
+            margin-right: 5px;
+        }
+
+        table td form button {
+            background-color: #008CBA;
+        }
+
+        table td form button:hover {
+            background-color: #006F9A;
+        }
+
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 0.6rem 2rem;
+            display: flex;
+            justify-content: center;
+            background-color: rgba(28, 28, 28, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-left {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-left li {
+            font-size: 1.2rem;
+        }
+
+        .nav-left a {
+            text-decoration: none;
+            color: #fff;
+            transition: color 0.5s, border-bottom 0.5s;
+            padding-bottom: 5px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .nav-left a:hover {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .nav-left .active {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #444;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            margin-top: 0.5rem;
+            min-width: 160px;
+        }
+
+        .dropdown-content a {
+            color: white;
+            padding: 0.5rem 1rem;
+            display: block;
+            text-decoration: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #555;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a href="/console.html">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#" class="active">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal.html" class="active">Linux</a>
+                    <a href="users.html">Users</a>
+                    <a href="user-management.html">User Management</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <h1>User Management</h1>
+
+    <h2>Add User</h2>
+    <form id="add-user-form" onsubmit="addUser(event)">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required placeholder="Enter name">
+
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+            <option value="admin">Admin</option>
+            <option value="editor">User</option>
+        </select>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required placeholder="Enter password">
+
+        <button type="submit">Add User</button>
+    </form>
+
+    <h2>User List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="user-table-body">
+        </tbody>
+    </table>
+
+</body>
+
+</html>
+<script>
+    const token = sessionStorage.getItem('authToken');
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    if (token) {
+        const userData = parseJwt(token);
+        if (userData && userData.role === 'admin') {
+            document.getElementById('adminDropdown').style.display = 'block';
+        }
+    }
+
+    async function loadUsers() {
+        try {
+            const token = sessionStorage.getItem('authToken');
+            if (token) {
+                const response = await fetch('/api/users', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                });
+
+                const users = await response.json();
+                console.log(users);
+
+                const userTable = document.getElementById('user-table-body');
+                userTable.innerHTML = '';
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.username || 'No name provided'}</td>
+                        <td>${user.role || 'No role provided'}</td>
+                        <td>
+                        <form onsubmit="submitName(event, ${user.id})" style="align-items: center; display: inline;">
+                            <label for="username-${user.id}">Name:</label>
+                            <input type="text" id="username-${user.id}" name="username" placeholder="${user.username}" value="${user.username}" style="width: 150px;"></input>
+                            <button type="submit">Update</button>
+                        </form>    
+                            <form id="roleForm-${user.id}" onsubmit="submitRole(event, ${user.id})" style="display:inline;">
+                                <label for="role-${user.id}">Role:</label>
+                                <select id="role-${user.id}" name="role">
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                                </select>
+                                <button type="submit">Update</button>
+                            </form>
+                        <form onsubmit="submitPassword(event, ${user.id})" style="align-items: center; display: inline;">
+                            <label for="password-${user.id}">Password:</label>
+                            <input type="password" id="password-${user.id}" name="password" placeholder="New password" style="width: 120px;"></input>
+                            <button type="submit">Update</button>
+                        </form>  
+                            <form style="align-items: center; display: inline;">
+                            <button class="btn-delete" onclick="deleteUser(${user.id})">Delete</button>
+                            </form>
+                        </td>
+                    `;
+
+                    userTable.appendChild(row);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    async function addUser(event) {
+        event.preventDefault();
+
+        const token = sessionStorage.getItem('authToken');
+        const username = document.getElementById('name').value;
+        const role = document.getElementById('role').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !role || !password) {
+            alert('Please fill out all fields!');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    username: username,
+                    role: role,
+                    password: password
+                })
+            });
+
+            if (response.ok) {
+                alert('User added successfully!');
+                document.getElementById('add-user-form').reset();
+                loadUsers();
+            } else {
+                alert('Error adding user');
+            }
+        } catch (error) {
+            console.error('Error adding user:', error);
+        }
+    }
+
+    async function deleteUser(id) {
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+            });
+            if (response.ok) {
+                document.getElementById('user-table-body').innerHTML = '';
+                loadUsers();
+            }
+        }
+    }
+
+    async function submitRole(event, userId) {
+        event.preventDefault();
+        const selectedRole = document.querySelector(`#role-${userId}`).value;
+        await changeRole(userId, selectedRole);
+    }
+
+    async function changeRole(id, newRole) {
+        console.log(id + " + " + newRole);
+
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ method: "role", role: newRole })
+            });
+
+            if (response.ok) {
+                document.getElementById('user-table-body').innerHTML = '';
+                loadUsers();
+            } else {
+                console.error("Failed to update role");
+            }
+        } else {
+            console.error("No auth token found");
+        }
+    }
+
+    async function submitName(event, userId) {
+        event.preventDefault();
+        const name = document.querySelector(`#username-${userId}`).value;
+        await changeName(userId, name);
+    }
+
+    async function changeName(id, newName) {
+        console.log(id + " + " + newName);
+
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ method: "name", name: newName })
+            });
+
+            if (response.ok) {
+                document.getElementById('user-table-body').innerHTML = '';
+                loadUsers();
+            } else {
+                console.error("Failed to update name");
+            }
+        } else {
+            console.error("No auth token found");
+        }
+    }
+    async function submitPassword(event, userId) {
+        event.preventDefault();
+        const name = document.querySelector(`#password-${userId}`).value;
+        await changePassword(userId, name);
+    }
+
+    async function changePassword(id, newPassword) {
+        console.log(id + " + " + newPassword);
+
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const response = await fetch(`/api/users/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ method: "password", password: newPassword })
+            });
+
+            if (response.ok) {
+                document.getElementById('user-table-body').innerHTML = '';
+                loadUsers();
+            } else {
+                console.error("Failed to update password");
+            }
+        } else {
+            console.error("No auth token found");
+        }
+    }
+
+    window.onload = loadUsers;
+</script>

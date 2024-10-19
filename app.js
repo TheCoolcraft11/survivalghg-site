@@ -1,4 +1,5 @@
-const express = require('express'); const fs = require('fs');
+const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 const cors = require('cors');
@@ -13,6 +14,11 @@ const useragent = require('useragent');
 const multer = require('multer');
 const os = require('os');
 const si = require('systeminformation');
+const { v5: uuidv5 } = require('uuid');
+const uuidNamespace = uuidv5.DNS;
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const pty = require('node-pty');
 
 require('dotenv').config();
 
@@ -45,7 +51,7 @@ function generateUniqueId(ip, userAgentString) {
 }
 
 
-async function logUserData(req, ip, url) {
+async function logUserData(req, ip, url, username) {
     //const ip = [
     //req.headers['cf-connecting-ip'],
     //req.headers['x-real-ip'],
@@ -54,7 +60,11 @@ async function logUserData(req, ip, url) {
     //]
 
     const userAgent = useragent.parse(req.headers['user-agent']);
-    const userId = generateUniqueId(ip, req.headers['user-agent']);
+    let userId = generateUniqueId(ip, req.headers['user-agent']);
+    if (username) {
+        userId = username;
+    }
+
 
     let city = 'Unknown';
     try {
@@ -64,10 +74,9 @@ async function logUserData(req, ip, url) {
     } catch (err) {
         console.error('Error fetching IP location:', err.message);
     }
-
     const userData = {
+        username,
         url,
-        userId,
         ip,
         city,
         device: {
@@ -102,7 +111,7 @@ function getTimestamp() {
     const now = new Date();
 
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -116,7 +125,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
+app.get('/test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'test.html'));
+});
 
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -135,8 +148,12 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+app.get('/console', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'console.html'));
+});
 
-app.post('/send', authenticateToken, (req, res) => {
+
+app.post('/api/mc/send', authenticateToken, (req, res) => {
 
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Access forbidden: Admins only' });
@@ -155,13 +172,14 @@ app.post('/send', authenticateToken, (req, res) => {
                     res.status(200).json({ message: `Executed command: ` + command });
                 }
             });
+
         } else {
             res.status(200).json({ type: 'Not Running', message: 'Minecraft server is not running' })
         }
     });
 });
 
-app.post('/kill', authenticateToken, (req, res) => {
+app.post('/api/mc/kill', authenticateToken, (req, res) => {
 
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Access forbidden: Admins only' });
@@ -186,14 +204,13 @@ app.post('/kill', authenticateToken, (req, res) => {
     });
 });
 
-app.post('/start', (req, res) => {
+app.post('/api/mc/start', (req, res) => {
     isMinecraftServerRunning(isRunning => {
         const exec = require('child_process').exec;
         if (!isRunning) {
             const command = req.body.command;
 
             exec(`screen -list`, (err, stdout, stderr) => {
-                console.log("Err: " + err, " StO: " + stdout, " StE: " + stderr + " - " + (!stdout.includes(screenSessionName) || stdout.includes('No Sockets found in')))
 
                 if (!stdout.includes(screenSessionName) || stdout.includes('No Sockets found in')) {
                     exec(`screen -S ${screenSessionName} -d -m`, (err) => {
@@ -203,7 +220,7 @@ app.post('/start', (req, res) => {
                         }
                     });
                 }
-                exec(`screen -S ${screenSessionName} -X stuff "java -jar server.jar\n"`, (err) => {
+                exec(`cd /home/max/Test && screen -S ${screenSessionName} -X stuff "java -jar server.jar\n"`, (err) => {
                     if (err) {
                         console.error(`Error executing command: ${err}`);
                         return res.send('Error sending command');
@@ -249,37 +266,7 @@ const server = app.listen(3000, () => {
     console.log('HTTP server running on http://localhost:3000');
 });
 
-const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
-
-    const sendLogData = () => {
-        fs.readFile(logFilePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error(`Error reading log file: ${err}`);
-                ws.send('Error reading log file');
-                return;
-            }
-            ws.send(data);
-        });
-    };
-
-    sendLogData();
-
-    const watcher = fs.watch(logFilePath, (eventType) => {
-        if (eventType === 'change') {
-            sendLogData();
-        }
-    });
-
-    ws.on('close', () => {
-        watcher.close();
-    });
-
-    ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
-    });
-});
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -293,12 +280,24 @@ function authenticateToken(req, res, next) {
     });
 }
 
+function readToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-app.post('/send-register', async (req, res) => {
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        req.user = user;
+        next();
+    });
+}
+
+
+app.post('/api/send-register', async (req, res) => {
     const { username, password, role } = req.body;
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
+
 
         db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, role], (err, result) => {
             if (err) {
@@ -314,7 +313,7 @@ app.post('/send-register', async (req, res) => {
 });
 
 
-app.post('/send-login', (req, res) => {
+app.post('/api/send-login', (req, res) => {
     const { username, password } = req.body;
 
     db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
@@ -343,7 +342,7 @@ app.get('/profile', authenticateToken, (req, res) => {
 
 
 
-app.post('/admin-action', authenticateToken, (req, res) => {
+app.post('/api/admin-action', authenticateToken, (req, res) => {
 
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Access forbidden: Admins only' });
@@ -352,22 +351,26 @@ app.post('/admin-action', authenticateToken, (req, res) => {
 
     res.json({ message: `Admin action performed by ${req.user.username}` });
 });
-app.post('/api/receive-ip', (req, res) => {
-    const { ip } = req.body;
-    const { url } = req.body;
+app.post('/api/receive-ip', readToken, (req, res) => {
+    const { ip, url } = req.body;
+    let username = 'Guest';
+    if (req.user) {
+        username = req.user.username || 'Guest';
+    }
 
-
-    logUserData(req, ip, url)
+    if (!username) {
+        username = 'N/A';
+    }
+    logUserData(req, ip, url, username)
 
     res.status(200).send('IP address received');
 });
 
 
 
-// Define storage for the profile pictures
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/profile-pictures'); // Directory where profile pictures will be stored
+        cb(null, 'uploads/profile-pictures');
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -375,10 +378,10 @@ const storage = multer.diskStorage({
     }
 });
 
-// Set up multer upload with file size limit and filter for image types
+
 const uploadProfilePic = multer({
     storage: storage,
-    limits: { fileSize: 1000000 }, // 1MB file limit
+    limits: { fileSize: 1000000 },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png/;
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -391,14 +394,13 @@ const uploadProfilePic = multer({
     }
 });
 
-app.post('/upload-profile-picture', authenticateToken, uploadProfilePic.single('profilePicture'), (req, res) => {
+app.post('/api/upload-profile-picture', authenticateToken, uploadProfilePic.single('profilePicture'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded or invalid file type' });
     }
 
     const profilePicPath = '/uploads/profile-pictures/' + req.file.filename;
 
-    // Update the user's profile picture in the database
     db.query('UPDATE users SET profile_picture = ? WHERE id = ?', [profilePicPath, req.user.id], (err, result) => {
         if (err) {
             console.error('Error updating profile picture:', err.message);
@@ -432,7 +434,7 @@ app.get('/api/profile', authenticateToken, (req, res) => {
         });
     });
 })
-app.post('/update-name', authenticateToken, (req, res) => {
+app.post('/api/update-name', authenticateToken, (req, res) => {
     const { name } = req.body;
     const userId = req.user.id;
 
@@ -451,7 +453,7 @@ app.post('/update-name', authenticateToken, (req, res) => {
 });
 
 
-app.post('/update-password', authenticateToken, async (req, res) => {
+app.post('/api/update-password', authenticateToken, async (req, res) => {
     const { password } = req.body;
     const userId = req.user.id;
 
@@ -482,15 +484,12 @@ app.post('/update-password', authenticateToken, async (req, res) => {
 
 app.get('/api/info', async (req, res) => {
     try {
-        // Get CPU Info
         const cpu = await si.cpu();
-        const cpuLoad = await si.currentLoad(); // Get current CPU load
+        const cpuLoad = await si.currentLoad();
 
-        // Get RAM Info
+
         const memory = await si.mem();
-        const usedMemory = memory.total - memory.free; // Calculate used memory
-
-        // Get Disk Info
+        const usedMemory = memory.total - memory.free;
         const disks = await si.diskLayout();
         const diskInfo = await si.fsSize();
 
@@ -503,10 +502,9 @@ app.get('/api/info', async (req, res) => {
             };
         });
 
-        // Get Network Stats
+
         const networkStats = await si.networkStats();
 
-        // Prepare network traffic data
         const networkTraffic = networkStats.map(iface => ({
             iface: iface.iface,
             mac: iface.mac || 'N/A',
@@ -514,17 +512,16 @@ app.get('/api/info', async (req, res) => {
             ip6: iface.ip4 || 'N/A',
             tx_bytes: iface.tx_bytes || 0,
             rx_bytes: iface.rx_bytes || 0,
-            upload: (iface.tx_bytes / 1024 / 1024).toFixed(2) + ' MB', // Convert to MB
-            download: (iface.rx_bytes / 1024 / 1024).toFixed(2) + ' MB', // Convert to MB
+            upload: (iface.tx_bytes / 1024 / 1024).toFixed(2) + ' MB',
+            download: (iface.rx_bytes / 1024 / 1024).toFixed(2) + ' MB',
         }));
 
-        // Prepare response data
         const systemInfo = {
             cpu: {
                 manufacturer: cpu.manufacturer,
                 brand: cpu.brand,
                 cores: cpu.cores,
-                usage: cpuLoad.currentLoad.toFixed(2), // CPU usage percentage
+                usage: cpuLoad.currentLoad.toFixed(2),
             },
             memory: {
                 total: (memory.total / 1024 / 1024).toFixed(2) + ' MB',
@@ -541,10 +538,10 @@ app.get('/api/info', async (req, res) => {
     }
 });
 
-// Define storage for the profile pictures
+
 const storage2 = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/screenshots'); // Directory where profile pictures will be stored
+        cb(null, 'uploads/screenshots');
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -552,10 +549,10 @@ const storage2 = multer.diskStorage({
     }
 });
 
-// Set up multer upload with file size limit and filter for image types
+
 const screenshotStorage = multer({
     storage: storage2,
-    limits: { fileSize: 1000000 }, // 1MB file limit
+    limits: { fileSize: 3500000 },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png/;
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -576,3 +573,251 @@ app.post('/api/upload-screenshot', screenshotStorage.single('file'), (req, res) 
     res.status(200).send('File uploaded successfully.');
 });
 
+app.set('view engine', 'ejs');
+
+app.get('/screenshots', (req, res) => {
+    const imagesDir = path.join(__dirname, 'uploads/screenshots');
+
+    fs.readdir(imagesDir, (err, files) => {
+        if (err) {
+            return res.status(500).send('Unable to scan directory: ' + err);
+        }
+
+        const images = files.filter(file => {
+            return file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png') || file.endsWith('.gif');
+        });
+
+        res.render('screenshots', { images });
+    });
+});
+
+
+app.get('/api/users', authenticateToken, (req, res) => {
+    db.query('SELECT id, username, role FROM users', (err, results) => {
+        if (err) throw err;
+        res.json(results);
+    });
+});
+app.post('/api/users', async (req, res) => {
+    const { username, role, password } = req.body;
+
+
+    if (!username || !role || !password) {
+        return res.status(400).json({ error: 'Please provide a username, role, and password' });
+    }
+
+    try {
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const query = 'INSERT INTO users (username, role, password) VALUES (?, ?, ?)';
+        db.query(query, [username, role, hashedPassword], (error, results) => {
+            if (error) {
+                console.error('Error inserting user:', error);
+                return res.status(500).json({ error: 'Database error' });
+            }
+
+            res.status(201).json({
+                message: 'User added successfully',
+                userId: results.insertId,
+                username: username,
+                role: role
+            });
+        });
+    } catch (error) {
+        console.error('Error hashing password:', error);
+        res.status(500).json({ error: 'Error processing request' });
+    }
+});
+
+
+app.delete('/api/users/:id', authenticateToken, (req, res) => {
+    const userId = req.params.id;
+    db.query('DELETE FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) throw err;
+        res.json({ success: true });
+    });
+});
+
+app.post('/api/users/:id', authenticateToken, async (req, res) => {
+    const userId = req.params.id;
+    const role = req.body.role;
+    const name = req.body.name;
+    const password = req.body.password;
+    const method = req.body.method;
+    if (method) {
+        if (method == "role") {
+            if (userId && role) {
+                db.query('UPDATE users SET role = ? WHERE id = ?', [role, userId], (err, results) => {
+                    if (err) throw err;
+                    res.json({ success: true });
+                });
+            } else {
+                return res.status(400).json({ error: 'Please provide a userid and role' });
+            }
+        }
+        if (method == "name") {
+            if (userId && name) {
+                db.query('UPDATE users SET username = ? WHERE id = ?', [name, userId], (err, results) => {
+                    if (err) throw err;
+                    res.json({ success: true });
+                });
+            } else {
+                return res.status(400).json({ error: 'Please provide a userid and name' });
+            }
+        }
+        if (method == "password") {
+            if (userId && password) {
+                try {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], (err, results) => {
+                        if (err) throw err;
+                        res.json({ success: true });
+                    });
+                } catch (error) {
+                    console.log('Error hashing password' + error)
+                    res.status(500).json({ error: 'Error processing request' });
+                }
+            } else {
+                console.log("2")
+                return res.status(400).json({ error: 'Please provide a userid and password' });
+            }
+        }
+    }
+});
+
+app.get('/users', authenticateToken, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'users.html'));
+});
+
+
+const wServer1 = http.createServer();
+const wServer2 = http.createServer();
+
+const wss1 = new WebSocketServer({ server: wServer1 });
+
+
+wss1.on('connection', (ws) => {
+
+    const sendLogData = () => {
+        fs.readFile(logFilePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error(`Error reading log file: ${err}`);
+                ws.send('Error reading log file');
+                return;
+            }
+            ws.send(data);
+        });
+    };
+
+    sendLogData();
+
+    const watcher = fs.watch(logFilePath, (eventType) => {
+        if (eventType === 'change') {
+            sendLogData();
+        }
+    });
+
+    ws.on('close', () => {
+        watcher.close();
+    });
+
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+});
+
+function authenticateWsToken(token) {
+    if (!token || token == 'null') return { error: 'Unauthorized' };
+
+    try {
+        let user = null;
+        jwt.verify(token, JWT_SECRET, (err, user2) => {
+            user = user2;
+        });
+        return { user };
+    } catch (err) {
+        return { error: 'Forbidden' };
+    }
+}
+
+
+const wss2 = new WebSocketServer({ server: wServer2 });
+const IDLE_TIMEOUT = 60000;
+
+wss2.on('connection', (ws, req) => {
+    const urlParams = new URLSearchParams(req.url.split('?')[1]);
+    const token = urlParams.get('token');
+    const authResult = authenticateWsToken(token);
+
+    if (!authResult || !authResult.user) {
+        ws.close(3000);
+        return;
+    }
+
+    if (authResult.error) {
+        ws.close(1011, authResult.error);
+        return;
+    }
+
+    if (authResult.user.role != 'admin') {
+        ws.close(3003, 'Only Admins can access this!');
+        return;
+    }
+
+    console.log('New WebSocket connection');
+    const scriptPath = '/bin/login';
+
+    const shell = pty.spawn('bash', [], {
+        name: 'xterm-color',
+        cols: 100,
+        rows: 34,
+        cwd: process.env.HOME,
+        env: process.env
+    });
+
+    let idleTimer;
+
+    const resetIdleTimer = () => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            console.log('Closing terminal due to inactivity.');
+            ws.close(4001, 'Session ended due to inactivity');
+            shell.kill();
+        }, IDLE_TIMEOUT);
+    };
+
+    shell.on('data', (data) => {
+        ws.send(data);
+        resetIdleTimer();
+    });
+
+    ws.on('message', (message) => {
+        shell.write(message);
+        resetIdleTimer();
+    });
+
+    shell.on('exit', (exitCode) => {
+        console.log(`Shell exited with code: ${exitCode}`);
+        ws.close(1000, 'Shell session ended.');
+    });
+
+    ws.on('close', () => {
+        console.log('WebSocket connection closed');
+        clearTimeout(idleTimer);
+        shell.kill();
+    });
+
+    ws.on('resize', (cols, rows) => {
+        shell.resize(cols, rows);
+    });
+});
+
+
+wServer1.listen(8080, () => {
+    console.log('WebSocket Server 1 is listening on ws://localhost:8080');
+});
+
+wServer2.listen(8081, () => {
+    console.log('WebSocket Server 2 is listening on ws://localhost:8081');
+});

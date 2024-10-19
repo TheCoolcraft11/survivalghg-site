@@ -15,8 +15,17 @@
             <li><a href="/console.html" class="active">Server</a></li>
             <li><a href="login.html">Login</a></li>
             <li><a href="profile.html">Profile</a></li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal.html">Linux</a>
+                    <a href="users.html">Users</a>
+                    <a href="user-management.html">User Management</a>
+                </div>
+            </li>
         </ul>
     </nav>
+
     <div>
         <div class="console" id="console"></div>
         <div>
@@ -48,11 +57,33 @@
 
 </body>
 <script>
+    const token = sessionStorage.getItem('authToken');
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    if (token) {
+        const userData = parseJwt(token);
+        if (userData && userData.role === 'admin') {
+            document.getElementById('adminDropdown').style.display = 'block';
+        }
+    }
+
     let socket;
 
     function connectWebSocket() {
 
-        socket = new WebSocket(`ws:` + window.location.origin.replace("http://", "").replace("https://", ""));
+        socket = new WebSocket(`ws:` + window.location.origin.replace("http://", "").replace("https://", "").replace(":3000", ":8080"));
 
         socket.onmessage = function (event) {
             const outputDiv = document.getElementById('console');
@@ -76,8 +107,8 @@
         const commandInput = document.querySelector('input[name="command"]');
         const command = commandInput.value;
         const token = sessionStorage.getItem('authToken');
-        if (token != null) {
-            fetch('/send', {
+        if (token) {
+            fetch('/api/mc/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -123,11 +154,14 @@
     }
 
     async function sendIPToServer(ip, url) {
+        const token = sessionStorage.getItem('authToken');
+
         try {
             await fetch('/api/receive-ip', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ ip, url })
             });
@@ -137,6 +171,7 @@
 
         }
     }
+
 
     async function initialize() {
         const ip = await getPublicIP();
@@ -149,7 +184,7 @@
     initialize();
 
     document.getElementById('btn-start').addEventListener('click', async (e) => {
-        fetch('/start', {
+        fetch('/api/mc/start', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -163,8 +198,8 @@
 
     document.getElementById('btn-stop').addEventListener('click', async (e) => {
         const token = sessionStorage.getItem('authToken');
-        if (token != null) {
-            fetch('/send', {
+        if (token) {
+            fetch('/api/mc/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -201,8 +236,8 @@
 
     document.getElementById('btn-restart').addEventListener('click', async (e) => {
         const token = sessionStorage.getItem('authToken');
-        if (token != null) {
-            fetch('/send', {
+        if (token) {
+            fetch('/api/mc/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -237,8 +272,8 @@
     });
     document.getElementById('btn-restart').addEventListener('click', async (e) => {
         const token = sessionStorage.getItem('authToken');
-        if (token != null) {
-            fetch('/send', {
+        if (token) {
+            fetch('/api/mc/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -273,8 +308,8 @@
     });
     document.getElementById('btn-kill').addEventListener('click', async (e) => {
         const token = sessionStorage.getItem('authToken');
-        if (token != null) {
-            fetch('/kill', {
+        if (token) {
+            fetch('/api/mc/kill', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -333,7 +368,7 @@
         font-size: 16px;
         overflow-y: auto;
         border-radius: 10px;
-        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.8);
+        box-shadow: 0px 0px 20px rgba(3, 2, 2, 0.8);
         opacity: 0.67;
         margin-top: 20px;
         position: relative;
@@ -522,6 +557,36 @@
     .nav-left .active {
         color: #4db1ff;
         border-bottom: 2px solid #4db1ff;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #444;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        margin-top: 0.5rem;
+        min-width: 160px;
+    }
+
+    .dropdown-content a {
+        color: white;
+        padding: 0.5rem 1rem;
+        display: block;
+        text-decoration: none;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #555;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
     }
 </style>
 

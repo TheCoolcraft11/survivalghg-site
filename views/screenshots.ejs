@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            text-align: center;
+            position: relative;
+            top: 30px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        h1.dark-mode {
+            color: #ffffff;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            top: 20px;
+            position: relative;
+            justify-items: center;
+        }
+
+        .gallery img {
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+            border-radius: 10px;
+            border: 4px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            user-select: none;
+            -webkit-user-drag: none;
+            object-fit: cover;
+        }
+
+        .gallery img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            border-color: #aaa;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            flex-direction: column;
+        }
+
+        #modal img {
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 10px;
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        #modal img.visible {
+            opacity: 1;
+        }
+
+        #modal span {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        #modal span:hover {
+            color: #f39c12;
+        }
+
+        #fullscreenBtn,
+        #downloadBtn,
+        #slideshowToggle,
+        #nextBtn,
+        #prevBtn,
+        #randomBtn {
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            background-color: #000000a0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            border: none;
+        }
+
+        #fullscreenBtn:hover,
+        #downloadBtn:hover,
+        #slideshowToggle:hover,
+        #nextBtn:hover,
+        #prevBtn:hover,
+        #randomBtn:hover {
+            color: #f39c12;
+        }
+
+        #buttonContainer {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #intervalInput {
+            width: 60px;
+            margin: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #333;
+            color: white;
+        }
+
+        #imageCount {
+            color: white;
+            margin: 10px;
+        }
+
+        #thumbnails {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        #thumbnails img {
+            width: 50px;
+            height: auto;
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin: 0 5px;
+            border-radius: 5px;
+            transition: border 0.3s;
+        }
+
+        #thumbnails img:hover,
+        #thumbnails img.selected {
+            border: 2px solid #f39c12;
+        }
+
+        #loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 8px solid rgba(255, 255, 255, 0.5);
+            border-top: 8px solid #f39c12;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        body.dark-mode {
+            background-color: #222;
+            color: #f4f4f4;
+        }
+
+        /* Add styles for dark mode toggle */
+        #darkModeToggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 2000;
+        }
+
+        #darkModeToggle:hover {
+            background-color: #555;
+        }
+              .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 0.6rem 2rem;
+            display: flex;
+            justify-content: center;
+            background-color: rgba(28, 28, 28, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-left {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-left li {
+            font-size: 1.2rem;
+        }
+
+        .nav-left a {
+            text-decoration: none;
+            color: #fff;
+            transition: color 0.5s, border-bottom 0.5s;
+            padding-bottom: 5px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .nav-left a:hover {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .nav-left .active {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+    </style>
+</head>
+
+<body>
+ <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="/console.html">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+        </ul>
+    </nav>
+
+
+    <button id="darkModeToggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+
+    <h1 class="header" id="header">Screenshots</h1>
+    <div class="gallery">
+        <% images.forEach(image=> { %>
+            <div class="gallery-item">
+                <img src="/uploads/screenshots/<%= image %>" alt="<%= image %>"
+                    onclick="showModal(this.src, '<%= image %>')" loading="lazy">
+            </div>
+            <% }) %>
+    </div>
+
+    <div id="modal" onclick="hideModal(event)">
+        <span>&times;</span>
+        <div id="loading"></div>
+        <img id="modalImage" src="" alt="Full Image">
+        <div id="imageCount"></div>
+
+        <div id="buttonContainer">
+            <button id="prevBtn" onclick="previousImage()">Previous</button>
+            <button id="nextBtn" onclick="nextImage()">Next</button>
+            <button id="fullscreenBtn" onclick="toggleFullScreen()">Fullscreen</button>
+            <button id="downloadBtn" onclick="downloadImage()">Download</button>
+            <button id="randomBtn" onclick="randomImage()">Random Image</button>
+            <button id="slideshowToggle" onclick="toggleSlideshow()">Start Slideshow</button>
+            <input type="number" id="intervalInput" placeholder="Interval (s)" min="1" value="5">
+        </div>
+
+        <div id="thumbnails"></div>
+    </div>
+
+    <script>
+        let currentSrc = '';
+        let currentIndex = 0;
+        let intervalId;
+        let slideshowActive = false;
+
+        const images = [];
+        <% images.forEach(image => { %>
+            images.push("/uploads/screenshots/<%= image %>");
+        <% }) %>
+
+            function showModal(src) {
+                const modal = document.getElementById('modal');
+                const modalImg = document.getElementById('modalImage');
+                const loading = document.getElementById('loading');
+
+                modal.style.display = 'flex';
+                currentSrc = src;
+                currentIndex = images.indexOf(src);
+                updateImageCount(images.length);
+                loadImage(src);
+                createThumbnails();
+
+                loading.style.display = 'block'; // Show loading spinner
+                modalImg.onload = () => {
+                    loading.style.display = 'none'; // Hide loading spinner
+                    modalImg.classList.add('visible');
+                };
+
+                stopSlideshow(); // Ensure slideshow is off when modal opens
+                document.addEventListener('keydown', keyNavigation);
+            }
+
+        function loadImage(src) {
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = src;
+            modalImg.classList.remove('visible');
+        }
+
+        function hideModal(event) {
+            const modal = document.getElementById('modal');
+
+            if (event.target === modal || event.target.tagName === 'SPAN') {
+                modal.style.display = 'none';
+                document.getElementById('modalImage').src = '';
+                clearInterval(intervalId); // Stop slideshow
+                slideshowActive = false;
+                document.removeEventListener('keydown', keyNavigation);
+            }
+        }
+
+        function keyNavigation(e) {
+            if (e.key === "Escape") {
+                hideModal({ target: document.getElementById('modal') });
+            } else if (e.key === "ArrowRight") {
+                nextImage();
+            } else if (e.key === "ArrowLeft") {
+                previousImage();
+            } else if (e.key === "d") {
+                downloadImage();
+            } else if (e.key === "f") {
+                toggleFullScreen();
+            }
+        }
+
+        function updateImageCount(total) {
+            const imageCountDiv = document.getElementById('imageCount');
+            imageCountDiv.textContent = `Image ${currentIndex + 1} of ${total}`;
+        }
+
+        function createThumbnails() {
+            const thumbnailsContainer = document.getElementById('thumbnails');
+            thumbnailsContainer.innerHTML = ''; // Clear previous thumbnails
+
+            images.forEach((src, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = src;
+                thumb.onclick = () => {
+                    currentIndex = index;
+                    loadImage(src);
+                    updateImageCount(images.length);
+                    highlightThumbnail(index);
+                };
+                thumbnailsContainer.appendChild(thumb);
+            });
+            highlightThumbnail(currentIndex); // Highlight current thumbnail
+        }
+
+        function highlightThumbnail(index) {
+            const thumbnails = document.querySelectorAll('#thumbnails img');
+            thumbnails.forEach((thumb, i) => {
+                thumb.classList.toggle('selected', i === index);
+            });
+        }
+
+        function startSlideshow() {
+            if (slideshowActive) return; // Prevent multiple intervals
+            slideshowActive = true;
+
+            const interval = getInterval(); // Get the interval from the input
+            intervalId = setInterval(nextImage, interval * 1000); // Change image every X seconds
+            document.getElementById('slideshowToggle').textContent = 'Stop Slideshow';
+        }
+
+        function stopSlideshow() {
+            clearInterval(intervalId);
+            slideshowActive = false;
+            document.getElementById('slideshowToggle').textContent = 'Start Slideshow';
+        }
+
+        function toggleSlideshow() {
+            if (slideshowActive) {
+                stopSlideshow();
+            } else {
+                startSlideshow();
+            }
+        }
+
+        function getInterval() {
+            const intervalInput = document.getElementById('intervalInput');
+            return Math.max(Number(intervalInput.value) || 5, 1); // Default to 5 seconds if invalid
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % images.length;
+            loadImage(images[currentIndex]);
+            updateImageCount(images.length);
+            highlightThumbnail(currentIndex);
+        }
+
+        function previousImage() {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            loadImage(images[currentIndex]);
+            updateImageCount(images.length);
+            highlightThumbnail(currentIndex);
+        }
+
+        function randomImage() {
+            currentIndex = Math.floor(Math.random() * images.length);
+            loadImage(images[currentIndex]);
+            updateImageCount(images.length);
+            highlightThumbnail(currentIndex);
+        }
+
+        function toggleFullScreen() {
+            const modalImg = document.getElementById('modalImage');
+            if (!document.fullscreenElement) {
+                modalImg.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function downloadImage() {
+            const a = document.createElement('a');
+            a.href = currentSrc;
+            a.download = currentSrc.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            document.getElementById('header').classList.toggle('dark-mode');
+        }
+    </script>
+
+</body>
+
+</html>
