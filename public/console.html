@@ -56,6 +56,7 @@
         <h3>Server Links</h3>
         <ul>
             <li><a href="http://server-derby.gl.at.ply.gg:16599/" target="_blank">Bluemap</a></li>
+            <li><a href="./backups.html" target="_blank">Backups</a></li>
         </ul>
     </div>
     </div>
@@ -104,7 +105,9 @@
 
     function connectWebSocket() {
 
-        socket = new WebSocket(changeUrlPort(window.location.href, 8080));
+        //socket = new WebSocket(changeUrlPort(window.location.href, 8080));
+        socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws1');
+        console.log(window.location.origin);
 
         socket.onmessage = function (event) {
             const outputDiv = document.getElementById('console');

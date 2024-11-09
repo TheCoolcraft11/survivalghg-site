@@ -78,8 +78,7 @@
     const terminal = new Terminal();
     terminal.open(document.getElementById('terminal'));
 
-    const socket = new WebSocket(changeUrlPort(window.location.href, 8081) + `?token=${token}`);
-    console.log((changeUrlPort(window.location.href, 8081) + `?token=${token}`));
+    const socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws2' + `?token=${token}`);
 
 
     socket.onmessage = (event) => {
