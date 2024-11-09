@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Dashboard</title>
+    <link rel="stylesheet" href="widgets/css/widgets.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('./images/bg.png');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            /* Align items to the top */
+        }
+
+        /* Sidebar styles */
+        #sidebar {
+            width: 250px;
+            height: 100%;
+            background: white;
+            border-right: 1px solid #ddd;
+            position: fixed;
+            left: -250px;
+            /* Hidden offscreen */
+            transition: left 0.3s ease;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            /* Ensure it appears above other elements */
+        }
+
+        #sidebar.active {
+            left: 0;
+            /* Show sidebar */
+        }
+
+        #widgetList {
+            padding: 20px;
+            max-height: 400px;
+            /* Set a max height */
+            overflow-y: auto;
+            /* Enable scrolling */
+        }
+
+        .widget-item {
+            margin: 10px 5px;
+            /* Consistent margins around items */
+            padding: 10px;
+            /* Add padding for spacing inside items */
+        }
+
+
+        .widget-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            /* Added margin for better spacing */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .widget {
+            margin: 10px;
+            /* Margin between widgets */
+            flex: 1 1 auto;
+            /* Allow widgets to grow and shrink */
+            max-width: calc(33.333% - 20px);
+            /* Allow a maximum width if you want 3 per row */
+        }
+
+
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-right: 20px;
+            /* Margin for the heading */
+        }
+
+        #searchInput {
+            margin: 20px 0;
+            padding: 10px;
+            width: calc(100% - 40px);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #widgetContainer {
+            margin-left: 0;
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            /* Change this to flex-start */
+            align-items: flex-start;
+            /* Align items to the top */
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Widget Dashboard</h1>
+    <button onclick="toggleSidebar()">Widgets hinzufügen</button> <!-- Button to toggle sidebar -->
+
+    <div id="sidebar">
+        <input type="text" id="searchInput" placeholder="Widgets durchsuchen..." onkeyup="filterWidgets()">
+        <div id="widgetList"></div>
+    </div>
+
+    <div id="widgetContainer" style="margin-left: 0; flex: 1;"> <!-- Ensure space for sidebar -->
+        <!-- This div will hold the added widgets -->
+    </div>
+
+    <script>
+        let availableWidgets = [];
+
+        async function getWidgets() {
+            try {
+                const response = await fetch('/widgets.json');
+                if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
+                availableWidgets = await response.json();
+                displayWidgetList();
+            } catch (error) {
+                console.error('Fehler beim Abrufen der Widgets:', error);
+                availableWidgets = ['Error'];
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const widgetContainer = document.getElementById('widgetContainer');
+            sidebar.classList.toggle('active'); // Toggle the active class for sidebar
+
+            // Adjust the margin of the widget container based on the sidebar state
+            if (sidebar.classList.contains('active')) {
+                widgetContainer.style.marginLeft = '250px'; // Adjust margin when sidebar is active
+            } else {
+                widgetContainer.style.marginLeft = '0'; // No margin when sidebar is hidden
+            }
+        }
+
+        function filterWidgets() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filteredWidgets = availableWidgets.filter(widget => widget.title.toLowerCase().includes(searchInput));
+            displayWidgetList(filteredWidgets);
+        }
+
+        function displayWidgetList(filteredWidgets = availableWidgets) {
+            const widgetListElement = document.getElementById('widgetList');
+            widgetListElement.innerHTML = '';
+            filteredWidgets.forEach(widget => {
+                const widgetItem = document.createElement('div');
+                widgetItem.classList.add('widget-item');
+
+                widgetItem.innerHTML = `
+                <span>${widget.title}</span>
+                <button onclick="addWidget(${widget.id})">Hinzufügen</button>
+            `;
+                widgetListElement.appendChild(widgetItem);
+            });
+        }
+
+        function addWidget(widgetId) {
+            const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
+
+            if (widgetIndex > -1) {
+                const widget = availableWidgets[widgetIndex];
+
+                const container = document.getElementById('widgetContainer');
+                const widgetDiv = document.createElement('div');
+                widgetDiv.classList.add('widget');
+
+                if (widget.color) {
+                    widgetDiv.style.setProperty('--widget-bg-color', widget.color);
+                }
+                if (widget.accentColor) {
+                    widgetDiv.style.setProperty('--widget-accent-color', widget.accentColor);
+                }
+                if (widget.progressColor) {
+                    widgetDiv.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+                }
+                if (widget.progressBarColor) {
+                    widgetDiv.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+                }
+
+                fetch(widget.html)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Netzwerkproblem beim Laden des Widgets: ' + response.statusText);
+                        return response.text();
+                    })
+                    .then(html => {
+                        widgetDiv.innerHTML = html;
+                        container.appendChild(widgetDiv);
+
+                        if (widget.js) {
+                            const script = document.createElement('script');
+                            script.src = widget.js;
+                            script.async = true;
+                            document.body.appendChild(script);
+                        }
+
+                        availableWidgets.splice(widgetIndex, 1);
+                        displayWidgetList();
+                    })
+                    .catch(error => console.error('Fehler beim Laden des Widgets:', error));
+            }
+        }
+
+        getWidgets();
+    </script>
+</body>
+
+</html>

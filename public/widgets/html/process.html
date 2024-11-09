@@ -1,0 +1,55 @@
+<style>
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        padding: 10px;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: left;
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    li:hover {
+        background-color: var(--widget-hover-bg-color);
+    }
+
+    li:last-child {
+        border-bottom: none;
+    }
+
+    .tooltip {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: #333;
+        color: #fff;
+        padding: 5px;
+        border-radius: 5px;
+        white-space: nowrap;
+        z-index: 10;
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    li:hover .tooltip {
+        display: block;
+    }
+</style>
+</head>
+
+<body>
+    <div class="card top-processes-widget">
+        <h2>Top 5 Prozesse (CPU)</h2>
+        <ul id="process-list">
+        </ul>
+    </div>
+</body>
+
+</html>

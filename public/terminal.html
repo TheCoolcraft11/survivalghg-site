@@ -38,6 +38,21 @@
 </body>
 
 <script>
+    function changeUrlPort(url, newPort) {
+        try {
+            const parsedUrl = new URL(url);
+            parsedUrl.port = newPort;
+            parsedUrl.pathname = '/';
+            parsedUrl.protocol = 'ws:';
+            return parsedUrl.toString();
+        } catch (error) {
+            console.error("Invalid URL provided:", error);
+            return null;
+        }
+    }
+
+
+
     const token = sessionStorage.getItem('authToken');
     function parseJwt(token) {
         try {
@@ -63,7 +78,9 @@
     const terminal = new Terminal();
     terminal.open(document.getElementById('terminal'));
 
-    const socket = new WebSocket(`ws://${window.location.host}`.replace(":3000", ":8081") + `?token=${token}`);
+    const socket = new WebSocket(changeUrlPort(window.location.href, 8081) + `?token=${token}`);
+    console.log((changeUrlPort(window.location.href, 8081) + `?token=${token}`));
+
 
     socket.onmessage = (event) => {
         terminal.write(event.data);

@@ -52,11 +52,32 @@
             </div>
         </div>
     </div>
-
+    <div class="server-links" id="serverLinks">
+        <h3>Server Links</h3>
+        <ul>
+            <li><a href="http://server-derby.gl.at.ply.gg:16599/" target="_blank">Bluemap</a></li>
+        </ul>
+    </div>
+    </div>
 
 
 </body>
 <script>
+    function changeUrlPort(url, newPort) {
+        try {
+            const parsedUrl = new URL(url);
+            parsedUrl.port = newPort;
+            parsedUrl.pathname = '/';
+            parsedUrl.protocol = 'ws:';
+            return parsedUrl.toString();
+        } catch (error) {
+            console.error("Invalid URL provided:", error);
+            return null;
+        }
+    }
+
+
+
     const token = sessionStorage.getItem('authToken');
     function parseJwt(token) {
         try {
@@ -83,7 +104,7 @@
 
     function connectWebSocket() {
 
-        socket = new WebSocket(`ws:` + window.location.origin.replace("http://", "").replace("https://", "").replace(":3000", ":8080"));
+        socket = new WebSocket(changeUrlPort(window.location.href, 8080));
 
         socket.onmessage = function (event) {
             const outputDiv = document.getElementById('console');
@@ -359,7 +380,7 @@
 
 
     .console {
-        width: 90%;
+        width: 75%;
         height: 75vh;
         background-color: black;
         color: white;
@@ -372,19 +393,20 @@
         opacity: 0.67;
         margin-top: 20px;
         position: relative;
-        top: 5%;
+        top: 10%;
+        left: 7%;
 
     }
 
 
     .button-container {
-        margin-top: 50px;
+        margin-top: 90px;
         width: 80%;
         display: flex;
         justify-content: flex-end;
         padding-right: 10%;
         gap: 100px;
-        margin-left: 100px;
+        margin-left: -40px;
     }
 
     .btn:link,
@@ -502,6 +524,8 @@
         width: 500px;
         height: 50px;
         opacity: 0.75;
+        left: 7%;
+
 
     }
 
@@ -587,6 +611,43 @@
 
     .dropdown:hover .dropdown-content {
         display: block;
+    }
+
+    .server-links {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 10px;
+        color: white;
+        align-self: flex-end;
+        width: fit-content;
+        position: relative;
+        right: 0;
+        bottom: 40%;
+    }
+
+    .server-links h3 {
+        margin: 0 0 10px 0;
+    }
+
+    .server-links ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .server-links li {
+        margin: 5px 0;
+    }
+
+    .server-links a {
+        color: #4db1ff;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .server-links a:hover {
+        color: #ffffff;
+        text-decoration: underline;
     }
 </style>
 

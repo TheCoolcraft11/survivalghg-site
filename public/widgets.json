@@ -1,0 +1,66 @@
+[
+    {
+        "id": 1,
+        "title": "Time",
+        "js": "./widgets/js/time.js",
+        "html": "./widgets/html/time.html",
+        "color": "#4682b4",
+        "accentColor": "#ffcc00"
+    },
+    {
+        "id": 2,
+        "title": "Weather",
+        "js": "./widgets/js/weather.js",
+        "html": "./widgets/html/weather.html",
+        "color": "#4caf50",
+        "accentColor": "#ffcc00"
+    },
+    {
+        "id": 3,
+        "title": "Note",
+        "js": "./widgets/js/note.js",
+        "html": "./widgets/html/note.html"
+    },
+    {
+        "id": 4,
+        "title": "Calender",
+        "js": "./widgets/js/calender.js",
+        "html": "./widgets/html/calender.html"
+    },
+    {
+        "id": 5,
+        "title": "Password",
+        "js": "./widgets/js/password.js",
+        "html": "./widgets/html/password.html"
+    },
+    {
+        "id": 6,
+        "title": "Process",
+        "js": "./widgets/js/process.js",
+        "html": "./widgets/html/process.html"
+    },
+    {
+        "id": 7,
+        "title": "CPU",
+        "js": "./widgets/js/cpu.js",
+        "html": "./widgets/html/cpu.html"
+    },
+    {
+        "id": 8,
+        "title": "Memory",
+        "js": "./widgets/js/memory.js",
+        "html": "./widgets/html/memory.html"
+    },
+    {
+        "id": 9,
+        "title": "Disk",
+        "js": "./widgets/js/disk.js",
+        "html": "./widgets/html/disk.html"
+    },
+    {
+        "id": 10,
+        "title": "Network",
+        "js": "./widgets/js/network.js",
+        "html": "./widgets/html/network.html"
+    }
+]

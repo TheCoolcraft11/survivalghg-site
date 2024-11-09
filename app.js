@@ -23,13 +23,13 @@ const pty = require('node-pty');
 require('dotenv').config();
 
 const app = express();
-const logFilePath = '/home/max/Test/logs/latest.log';
-const screenSessionName = 'ScreenTest';
+const logFilePath = '/home/max/SurvivalGHG/logs/latest.log';
+const screenSessionName = 'SurvivalGHG';
 
 const db = mysql.createConnection({
-    host: process.env.HOST,
+    host: 'localhost',
     user: process.env.USER,
-    password: process.env.PASSWORD,
+    password: 'MinecraftGHG24!',
     database: process.env.DATABASE
 });
 
@@ -52,12 +52,12 @@ function generateUniqueId(ip, userAgentString) {
 
 
 async function logUserData(req, ip, url, username) {
-    //const ip = [
-    //req.headers['cf-connecting-ip'],
-    //req.headers['x-real-ip'],
-    //req.headers['x-forwarded-for'],
-    //req.socket.remoteAddress
-    //]
+    const ip2 = [
+        req.headers['cf-connecting-ip'],
+        req.headers['x-real-ip'],
+        req.headers['x-forwarded-for'],
+        req.socket.remoteAddress
+    ]
 
     const userAgent = useragent.parse(req.headers['user-agent']);
     let userId = generateUniqueId(ip, req.headers['user-agent']);
@@ -78,6 +78,7 @@ async function logUserData(req, ip, url, username) {
         username,
         url,
         ip,
+        ip2,
         city,
         device: {
             browser: userAgent.family,
@@ -213,14 +214,14 @@ app.post('/api/mc/start', (req, res) => {
             exec(`screen -list`, (err, stdout, stderr) => {
 
                 if (!stdout.includes(screenSessionName) || stdout.includes('No Sockets found in')) {
-                    exec(`screen -S ${screenSessionName} -d -m`, (err) => {
+                    exec(`screen -XS ${screenSessionName} quit`, (err) => {
                         if (err) {
                             console.error(`Error creating screen session: ${err}`);
                             return res.send('Error starting Minecraft server');
                         }
                     });
                 }
-                exec(`cd /home/max/Test && screen -S ${screenSessionName} -X stuff "java -jar server.jar\n"`, (err) => {
+                exec(`mcserver ~/SurvivalGHG\n`, (err) => {
                     if (err) {
                         console.error(`Error executing command: ${err}`);
                         return res.send('Error sending command');
@@ -237,7 +238,7 @@ app.post('/api/mc/start', (req, res) => {
 });
 
 function isMinecraftServerRunning(callback) {
-    const port = 25565;
+    const port = 25566;
     const host = 'localhost';
 
     const socket = new net.Socket();
@@ -683,6 +684,129 @@ app.post('/api/users/:id', authenticateToken, async (req, res) => {
                 return res.status(400).json({ error: 'Please provide a userid and password' });
             }
         }
+    }
+});
+
+app.get('/widgets', (req, res) => {
+    fs.readFile('widgets.json', (err, data) => {
+        if (err) {
+            return res.status(500).send('Error reading widgets file');
+        }
+        res.json(JSON.parse(data));
+    });
+});
+
+app.get('/widgets', (req, res) => {
+    res.sendFile(path.join(__dirname, 'widgets'));
+});
+
+// Route, um ein neues Widget (nur für Server) hinzuzufügen
+app.post('/all-widgets', (req, res) => {
+    const newWidget = req.body;
+
+    // Lese die vorhandenen Widgets
+    fs.readFile('widgets.json', (err, data) => {
+        if (err) {
+            return res.status(500).send('Error reading widgets file');
+        }
+        const widgets = JSON.parse(data);
+
+        // Füge das neue Widget hinzu
+        widgets.push(newWidget);
+
+        // Schreibe die Widgets zurück in die Datei
+        fs.writeFile('widgets.json', JSON.stringify(widgets, null, 2), (err) => {
+            if (err) {
+                return res.status(500).send('Error saving widget');
+            }
+            res.status(201).send('Widget created');
+        });
+    });
+});
+
+app.get('/top-processes', (req, res) => {
+    const { exec } = require('child_process');
+    // 'ps aux --sort=-%cpu' sortiert die Prozesse nach CPU-Auslastung absteigend
+    exec('ps aux --sort=-%cpu', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Fehler beim Ausführen des Befehls: ${error}`);
+            return res.status(500).json({ error: 'Fehler beim Abrufen der Prozesse' });
+        }
+
+        // Aufteilen der Ausgabe in Zeilen
+        const lines = stdout.split('\n');
+
+        // Die erste Zeile enthält die Header (z.B. USER, PID, %CPU, %MEM, etc.)
+        const headers = lines[0].split(/\s+/);
+
+        // Die restlichen Zeilen enthalten die Prozessinformationen
+        const processes = lines.slice(1).map(line => {
+            const details = line.split(/\s+/);
+            return {
+                user: details[0],
+                pid: details[1],
+                cpu: details[2],
+                mem: details[3],
+                command: details.slice(10).join(' ') // Befehl kann Leerzeichen enthalten
+            };
+        }).filter(process => process.pid); // Filtert leere Zeilen heraus
+
+        // Nur die obersten 5 Prozesse zurückgeben
+        const topProcesses = processes.slice(0, 5);
+        res.json(topProcesses);
+    });
+});
+
+
+const BACKUP_DIR = '/mnt/backup';
+app.get('/api/backups', authenticateToken, (req, res) => {
+    fs.readdir(BACKUP_DIR, (err, files) => {
+        if (err) {
+            return res.status(500).json({ error: 'Unable to scan directory' });
+        }
+
+        const backups = files
+            .filter(file => file.endsWith('.tar.gz'))
+            .map(file => {
+                const filePath = path.join(BACKUP_DIR, file);
+                const stats = fs.statSync(filePath);
+
+                return {
+                    name: file,
+                    size: (stats.size / (1024 * 1024)).toFixed(2) + ' MB',
+                    createdAt: stats.birthtime.toISOString(),
+                    downloadUrl: `/download/${file}`
+                };
+            });
+
+        res.json(backups);
+    });
+});
+
+app.get('/download/:filename', authenticateToken, (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(BACKUP_DIR, filename);
+
+    if (fs.existsSync(filePath)) {
+        res.download(filePath);
+    } else {
+        res.status(404).json({ error: 'File not found' });
+    }
+});
+
+app.delete('/api/backups/:filename', authenticateToken, (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(BACKUP_DIR, filename);
+
+    if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to delete file' });
+            }
+            res.json({ message: 'File deleted successfully' });
+        });
+    } else {
+        res.status(404).json({ error: 'File not found' });
     }
 });
 

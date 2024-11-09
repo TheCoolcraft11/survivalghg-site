@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floating Widget Selector</title>
+    <link rel="stylesheet" href="widgets/css/widgets.css">
+</head>
+
+<body>
+    <div class="grid-container">
+        <div class="field" id="field1" onclick="showFloatingUI(event, 'field1')">Field 1</div>
+        <div class="field" id="field2" onclick="showFloatingUI(event, 'field2')">Field 2</div>
+        <div class="field" id="field3" onclick="showFloatingUI(event, 'field3')">Field 3</div>
+        <div class="field" id="field4" onclick="showFloatingUI(event, 'field4')">Field 4</div>
+    </div>
+
+    <div id="floatingUI" class="floating-ui">
+        <p>Select a widget:</p>
+    </div>
+
+</body>
+
+</html>
+<style>
+    /* styles.css */
+
+    /* Grid styling from previous example */
+    body,
+    html {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(4, 250px);
+        grid-template-rows: repeat(2, 250px);
+        gap: 120px;
+    }
+
+    .field {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #d3d3d3;
+        border: 2px solid #555;
+        border-radius: 10px;
+        font-size: 1.2em;
+        color: #333;
+        cursor: pointer;
+    }
+
+    /* Floating UI styling */
+    .floating-ui {
+        position: absolute;
+        padding: 15px;
+        background-color: white;
+        border: 2px solid #555;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: none;
+        /* Hidden by default */
+        z-index: 1000;
+    }
+
+    .floating-ui p {
+        margin: 0;
+        font-weight: bold;
+    }
+
+    .floating-ui button {
+        display: block;
+        margin: 8px 0;
+        padding: 5px;
+        width: 100%;
+        cursor: pointer;
+    }
+</style>
+<script>
+    let availableWidgets = [];
+    let placedWidgets = [];
+
+    function showFloatingUI(event, fieldId) {
+        const floatingUI = document.getElementById('floatingUI');
+        const field = document.getElementById(fieldId);
+
+        const fieldRect = field.getBoundingClientRect();
+        floatingUI.innerHTML = '  <p>Select a widget:</p>';
+
+        floatingUI.style.left = `${fieldRect.right + 10}px`;
+        floatingUI.style.top = `${fieldRect.top}px`;
+
+        floatingUI.setAttribute('data-field-id', fieldId);
+
+        floatingUI.style.display = 'block';
+        console.log(availableWidgets)
+        availableWidgets.forEach(widget => {
+            console.log('Test')
+            const widgetItem = document.createElement('div');
+            widgetItem.classList.add('widget-item');
+            widgetItem.innerHTML = `<button onclick="selectWidget(${widget.id})">${widget.title}</button>`
+            floatingUI.appendChild(widgetItem);
+        })
+    }
+
+    function selectWidget(widgetId) {
+        const floatingUI = document.getElementById('floatingUI');
+        const fieldId = floatingUI.getAttribute('data-field-id');
+        const field = document.getElementById(fieldId)
+
+        addWidget(widgetId, field);
+
+        closeFloatingUI();
+    }
+
+    function closeFloatingUI() {
+        const floatingUI = document.getElementById('floatingUI');
+        floatingUI.style.display = 'none';
+    }
+
+
+
+    async function getWidgets() {
+        try {
+            const response = await fetch('/widgets.json');
+            if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
+            availableWidgets = await response.json();
+        } catch (error) {
+            console.error('Fehler beim Abrufen der Widgets:', error);
+            availableWidgets = ['Error'];
+        }
+    }
+
+    function addWidget(widgetId, container) {
+        const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
+
+        if (widgetIndex > -1) {
+            const widget = availableWidgets[widgetIndex];
+
+
+            console.log(container)
+
+            container.classList.add('widget');
+
+            if (widget.color) {
+                container.style.setProperty('--widget-bg-color', widget.color);
+            }
+            if (widget.accentColor) {
+                container.style.setProperty('--widget-accent-color', widget.accentColor);
+            }
+            if (widget.progressColor) {
+                container.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+            }
+            if (widget.progressBarColor) {
+                container.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+            }
+
+            fetch(widget.html)
+                .then(response => {
+                    if (!response.ok) throw new Error('Netzwerkproblem beim Laden des Widgets: ' + response.statusText);
+                    return response.text();
+                })
+                .then(html => {
+
+                    container.innerHTML = html;
+                    container.querySelector('div').id = "widget_" + widgetId;
+                    container.outerHTML = container.innerHTML;
+                    const widgetElement = document.getElementById("widget_" + widgetId);
+
+                    if (widget.color) {
+                        widgetElement.style.setProperty('--widget-bg-color', widget.color);
+                    }
+                    if (widget.accentColor) {
+                        widgetElement.style.setProperty('--widget-accent-color', widget.accentColor);
+                    }
+                    if (widget.progressColor) {
+                        widgetElement.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+                    }
+                    if (widget.progressBarColor) {
+                        widgetElement.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+                    }
+
+
+                    if (widget.js) {
+                        const script = document.createElement('script');
+                        script.src = widget.js;
+                        script.async = true;
+                        document.body.appendChild(script);
+                    }
+
+                    availableWidgets.splice(widgetIndex, 1);
+
+                })
+                .catch(error => console.error('Fehler beim Laden des Widgets:', error));
+        }
+    }
+    getWidgets();
+</script>
