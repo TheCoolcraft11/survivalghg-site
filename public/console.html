@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="fullscreen=*">
     <title>Console</title>
 </head>
 
@@ -55,8 +56,12 @@
     <div class="server-links" id="serverLinks">
         <h3>Server Links</h3>
         <ul>
-            <li><a href="http://server-derby.gl.at.ply.gg:16599/" target="_blank">Bluemap</a></li>
-            <li><a href="./backups.html" target="_blank">Backups</a></li>
+            <li> <button class="bluemap-btn links-btn" onclick="toggleIframe()">Bluemap</button>
+                <div class="iframe-container" id="iframeContainer" onclick="openIframeInNewTab()">
+                    <iframe id="bluemap-iframe" src="http://server-derby.gl.at.ply.gg:16599/"></iframe>
+                </div>
+            </li>
+            <li><button class="backup-btn links-btn" onclick="backups()">Backups</button></li>
         </ul>
     </div>
     </div>
@@ -64,6 +69,10 @@
 
 </body>
 <script>
+    function toggleIframe() {
+        const iframeContainer = document.getElementById("iframeContainer");
+        iframeContainer.classList.toggle("show");
+    }
     function changeUrlPort(url, newPort) {
         try {
             const parsedUrl = new URL(url);
@@ -366,6 +375,26 @@
             commandInput.value = '';
         }
     });
+
+    const iframe = document.getElementById('bluemap-iframe');
+    console.log(iframe)
+
+
+
+    function openIframeInNewTab() {
+        var iframe = document.getElementById('bluemap-iframe');
+        var iframeSrc = iframe.src;
+        window.open(iframeSrc, '_blank');
+    }
+
+    document.addEventListener('fullscreenchange', function () {
+        if (document.fullscreenElement === iframe) {
+            openIframeInNewTab();
+        }
+    });
+    function backups() {
+        window.location.href = '/backups.html'
+    }
 </script>
 <style>
     body {
@@ -651,6 +680,46 @@
     .server-links a:hover {
         color: #ffffff;
         text-decoration: underline;
+    }
+
+    .links-btn {
+        transform: translateY(-50%);
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        z-index: 10;
+    }
+
+    .iframe-container {
+        position: fixed;
+        top: 50%;
+        right: 80px;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transform: translateY(-50%);
+        transition: width 0.5s ease, height 0.5s ease, opacity 0.5s ease;
+        z-index: 100;
+        border: 7px solid #333;
+        cursor: pointer;
+        border-radius: 25px;
+    }
+
+    .iframe-container.show {
+        width: 600px;
+        height: 600px;
+        opacity: 1;
+    }
+
+    .iframe-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
     }
 </style>
 

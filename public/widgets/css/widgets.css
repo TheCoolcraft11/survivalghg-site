@@ -75,3 +75,13 @@ button:hover {
     background-color: #3a9b00;
     /* Dunkleres Grün für Hover */
 }
+
+.remove-widget-btn {
+    position: absolute;
+    background: #ff0000;
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+}

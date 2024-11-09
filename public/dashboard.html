@@ -19,14 +19,12 @@
     <div id="floatingUI" class="floating-ui">
         <p>Select a widget:</p>
     </div>
-
+    <button onclick="exportToJSON()">Export Configuration</button>
+    <button onclick="loadFromJSON()">Load Configuration</button>
 </body>
 
 </html>
 <style>
-    /* styles.css */
-
-    /* Grid styling from previous example */
     body,
     html {
         height: 100%;
@@ -56,7 +54,6 @@
         cursor: pointer;
     }
 
-    /* Floating UI styling */
     .floating-ui {
         position: absolute;
         padding: 15px;
@@ -65,7 +62,6 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         display: none;
-        /* Hidden by default */
         z-index: 1000;
     }
 
@@ -142,7 +138,11 @@
 
         if (widgetIndex > -1) {
             const widget = availableWidgets[widgetIndex];
-
+            placedWidgets.push({
+                fieldId: container.id,
+                widgetId: widget.id,
+                widgetTitle: widget.title
+            });
 
             console.log(container)
 
@@ -200,5 +200,125 @@
                 .catch(error => console.error('Fehler beim Laden des Widgets:', error));
         }
     }
+    async function exportToJSON() {
+        if (placedWidgets.length === 0) {
+            console.log('No widgets have been placed.');
+            return;
+        }
+
+        const widgetData = placedWidgets.map(widget => {
+            const widgetObj = availableWidgets.find(w => w.id === widget.widgetId);
+
+            return {
+                fieldId: widget.fieldId,
+                widgetId: widget.widgetId,
+                widgetTitle: widget.widgetTitle,
+                widgetDetails: widgetObj || {}
+            };
+        });
+
+        const token = sessionStorage.getItem('authToken');
+        const jsonData = JSON.stringify(widgetData, null, 2);
+        console.log(widgetData)
+        const response = await fetch('http://localhost:3000/api/dashboard-layout/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ layoutData: jsonData })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert('Dashboard layout saved successfully!');
+        } else {
+            alert('Error saving layout: ' + result.error);
+        }
+    }
+
+
+    async function loadFromJSON() {
+        const token = sessionStorage.getItem('authToken');
+        const response = await fetch('http://localhost:3000/api/dashboard-layout/load', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const result = await response.json();
+        console.log(result)
+        if (response.ok) {
+            const jsonData = result[0]?.dashboard_layout;
+            let widgetData;
+
+            if (typeof jsonData === 'string') {
+                widgetData = JSON.parse(jsonData);
+            } else {
+                widgetData = jsonData;
+            }
+
+            await getWidgets();
+
+            placedWidgets = [];
+            document.querySelectorAll('.field').forEach(field => {
+                field.innerHTML = `Field ${field.id.replace('field', '')}`;
+                field.classList.remove('widget');
+            });
+
+            // Reapply the widget configuration
+            widgetData.forEach(data => {
+                const field = document.getElementById(data.fieldId);
+                if (field) {
+                    addWidget(data.widgetId, field);
+                }
+            });
+        } else {
+            alert('Error loading layout: ' + result.error);
+        }
+
+    }
+
     getWidgets();
+
+    const token = sessionStorage.getItem('authToken');
+    function saveLayout(widgets) {
+        fetch('/save-layout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ widgets: widgets })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Error saving layout:', error));
+    }
+
+
+    function loadLayout() {
+        fetch('/load-layout', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.layout) {
+                    renderLayout(data.layout);
+                } else {
+                    console.log('No layout found');
+                }
+            })
+            .catch(error => console.error('Error loading layout:', error));
+    }
+
+
 </script>

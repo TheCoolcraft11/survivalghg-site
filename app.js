@@ -29,9 +29,10 @@ const screenSessionName = 'SurvivalGHG';
 const db = mysql.createConnection({
     host: 'localhost',
     user: process.env.USER,
-    password: 'MinecraftGHG24!',
+    password: process.env.PASSWORD,
     database: process.env.DATABASE
 });
+
 
 
 db.connect(err => {
@@ -680,7 +681,6 @@ app.post('/api/users/:id', authenticateToken, async (req, res) => {
                     res.status(500).json({ error: 'Error processing request' });
                 }
             } else {
-                console.log("2")
                 return res.status(400).json({ error: 'Please provide a userid and password' });
             }
         }
@@ -700,21 +700,17 @@ app.get('/widgets', (req, res) => {
     res.sendFile(path.join(__dirname, 'widgets'));
 });
 
-// Route, um ein neues Widget (nur für Server) hinzuzufügen
 app.post('/all-widgets', (req, res) => {
     const newWidget = req.body;
 
-    // Lese die vorhandenen Widgets
     fs.readFile('widgets.json', (err, data) => {
         if (err) {
             return res.status(500).send('Error reading widgets file');
         }
         const widgets = JSON.parse(data);
 
-        // Füge das neue Widget hinzu
         widgets.push(newWidget);
 
-        // Schreibe die Widgets zurück in die Datei
         fs.writeFile('widgets.json', JSON.stringify(widgets, null, 2), (err) => {
             if (err) {
                 return res.status(500).send('Error saving widget');
@@ -726,20 +722,14 @@ app.post('/all-widgets', (req, res) => {
 
 app.get('/top-processes', (req, res) => {
     const { exec } = require('child_process');
-    // 'ps aux --sort=-%cpu' sortiert die Prozesse nach CPU-Auslastung absteigend
     exec('ps aux --sort=-%cpu', (error, stdout, stderr) => {
         if (error) {
             console.error(`Fehler beim Ausführen des Befehls: ${error}`);
             return res.status(500).json({ error: 'Fehler beim Abrufen der Prozesse' });
         }
 
-        // Aufteilen der Ausgabe in Zeilen
         const lines = stdout.split('\n');
-
-        // Die erste Zeile enthält die Header (z.B. USER, PID, %CPU, %MEM, etc.)
         const headers = lines[0].split(/\s+/);
-
-        // Die restlichen Zeilen enthalten die Prozessinformationen
         const processes = lines.slice(1).map(line => {
             const details = line.split(/\s+/);
             return {
@@ -747,11 +737,9 @@ app.get('/top-processes', (req, res) => {
                 pid: details[1],
                 cpu: details[2],
                 mem: details[3],
-                command: details.slice(10).join(' ') // Befehl kann Leerzeichen enthalten
+                command: details.slice(10).join(' ')
             };
-        }).filter(process => process.pid); // Filtert leere Zeilen heraus
-
-        // Nur die obersten 5 Prozesse zurückgeben
+        }).filter(process => process.pid);
         const topProcesses = processes.slice(0, 5);
         res.json(topProcesses);
     });
@@ -848,6 +836,34 @@ wss1.on('connection', (ws) => {
 
     ws.on('error', (error) => {
         console.error('WebSocket error:', error);
+    });
+});
+app.post('/api/dashboard-layout/save', authenticateToken, async (req, res) => {
+    const layoutData = req.body.layoutData;
+    db.query('UPDATE users SET dashboard_layout = ? WHERE id = ?', [layoutData, req.user.id], (err, result) => {
+        if (err) {
+            console.error('Error updating profile picture:', err.message);
+            return res.status(500).json({ message: 'Error updating profile picture' });
+        }
+
+        res.status(200).json({ message: 'Layout updated successfully', layoutData: layoutData });
+    });
+});
+
+
+app.get('/api/dashboard-layout/load', authenticateToken, async (req, res) => {
+    db.query('SELECT dashboard_layout FROM users WHERE id = ?', [req.user.id], (err, results) => {
+        if (err) {
+            console.error('Error retrieving layout:', err.message);
+            return res.status(500).json({ message: 'Error retrieving layout' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+
+        res.json(results);
     });
 });
 
