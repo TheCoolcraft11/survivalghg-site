@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,15 +19,23 @@
         }
 
         @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .container {
             text-align: center;
             background-color: rgba(255, 255, 255, 0.8);
-            padding:70px;
+            padding: 70px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
         }
@@ -35,12 +44,19 @@
             color: #333;
             margin-bottom: 20px;
             animation: float 3s ease-in-out infinite;
-            font-site: 30px;
+            font-size: 30px;
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         button {
@@ -60,6 +76,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1 id="greeting">Felix ist der beste</h1>
@@ -75,4 +92,5 @@
         }
     </script>
 </body>
+
 </html>

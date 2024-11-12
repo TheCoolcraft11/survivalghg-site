@@ -1,28 +1,17 @@
-/* widgets.css */
 :root {
     --widget-bg-color: #acadaf;
-    /* Helles Grau für besseren Kontrast */
     --widget-text-color: #333;
-    /* Dunkles Grau für Lesbarkeit */
     --widget-hover-bg-color: rgba(0, 0, 0, 0.05);
-    /* Dezentes Hover-Highlight */
     --widget-border-radius: 12px;
-    /* Abgerundet für modernes Design */
     --widget-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    /* Weicherer Schatten */
     --widget-hover-scale: 1.03;
-    /* Weniger drastisches Hover-Zoomen */
     --widget-accent-color: #0056b3;
-    /* Dunkleres Blau */
     --widget-progress-bg-color: #ddd;
-    /* Helleres Grau für Progress-Hintergrund */
     --widget-progress-bar-color: #4CAF50;
-    /* Grüne Fortschrittsleiste */
 }
 
 
 
-/* Main widget card styling */
 .card {
     background: var(--widget-bg-color);
     border-radius: var(--widget-border-radius);
@@ -38,12 +27,10 @@
     transform: scale(var(--widget-hover-scale));
 }
 
-/* Heading style */
 .card h2 {
     color: var(--widget-accent-color);
 }
 
-/* Progress bar styling */
 .progress {
     width: 100%;
     background-color: var(--widget-progress-bg-color);
@@ -73,7 +60,6 @@ button {
 
 button:hover {
     background-color: #3a9b00;
-    /* Dunkleres Grün für Hover */
 }
 
 .remove-widget-btn {
@@ -84,4 +70,13 @@ button:hover {
     padding: 5px;
     border-radius: 50%;
     cursor: pointer;
+}
+
+.card {
+    overflow: auto;
+    scrollbar-width: 0px;
+}
+
+.card::-webkit-scrollbar {
+    display: none;
 }

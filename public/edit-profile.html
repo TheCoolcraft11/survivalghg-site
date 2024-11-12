@@ -4,6 +4,145 @@
 <head>
     <title>Edit Profile</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: url('./images/bg.webp');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .profile-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .profile-pic-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #007BFF;
+            object-fit: cover;
+        }
+
+        #uploadForm input[type="file"] {
+            display: none;
+        }
+
+        .custom-upload-btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .custom-upload-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .form-style {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+            max-width: 400px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .form-style h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 8px;
+        }
+
+        .form-style label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-style input[type="text"],
+        .form-style input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #f8f8f8;
+        }
+
+        .form-style button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-style button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .profile-container {
+                padding: 10px;
+            }
+        }
+
+        .profile-actions button.back {
+            background-color: #FF4B4B;
+        }
+
+        .profile-actions button.back:hover {
+            background-color: #D73838;
+        }
+
+        .back {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+    </style>
 </head>
 
 <body>
@@ -42,251 +181,110 @@
     <div class="profile-actions">
         <button class="back">Back</button>
     </div>
+
+    <script>
+        document.getElementById('profilePicture').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    document.getElementById('profilePic').src = event.target.result;
+                };
+
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const token = sessionStorage.getItem('authToken');
+
+            const formData = new FormData(this);
+            fetch('/api/upload-profile-picture', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.profilePicture) {
+                        document.getElementById('profilePic').src = data.profilePicture;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+        document.getElementById('changeNameForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const token = sessionStorage.getItem('authToken');
+            const name = document.getElementById('name').value;
+
+            if (!name) {
+                alert('Please enter a new name.');
+                return;
+            }
+
+            fetch('/api/update-name', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Name updated successfully!');
+                    } else {
+                        alert('Error updating name: ' + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('changePasswordForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const token = sessionStorage.getItem('authToken');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!password) {
+                alert('Please enter a new password.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            fetch('/api/update-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password updated successfully!');
+                    } else {
+                        alert('Error updating password: ' + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+        document.querySelector('.back').addEventListener('click', () => {
+            window.location.href = '/profile.html';
+        });
+    </script>
 </body>
 
 </html>
-
-
-
-<script>
-    document.getElementById('profilePicture').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-
-            reader.onload = function (event) {
-                document.getElementById('profilePic').src = event.target.result;
-            };
-
-
-            reader.readAsDataURL(file);
-        }
-    });
-
-
-    document.getElementById('uploadForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const token = sessionStorage.getItem('authToken');
-
-        const formData = new FormData(this);
-        fetch('/api/upload-profile-picture', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.profilePicture) {
-                    document.getElementById('profilePic').src = data.profilePicture;
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-    document.getElementById('changeNameForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const token = sessionStorage.getItem('authToken');
-        const name = document.getElementById('name').value;
-
-        if (!name) {
-            alert('Please enter a new name.');
-            return;
-        }
-
-        fetch('/api/update-name', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ name })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Name updated successfully!');
-                } else {
-                    alert('Error updating name: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-
-    document.getElementById('changePasswordForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const token = sessionStorage.getItem('authToken');
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        if (!password) {
-            alert('Please enter a new password.');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            alert('Passwords do not match!');
-            return;
-        }
-
-        fetch('/api/update-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ password })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Password updated successfully!');
-                } else {
-                    alert('Error updating password: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-    document.querySelector('.back').addEventListener('click', () => {
-        window.location.href = '/profile.html';
-    });
-</script>
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        background-image: url('./images/bg.png');
-        background-size: cover;
-        background-position: center;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .profile-container {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        max-width: 500px;
-        width: 100%;
-        margin: 20px auto;
-        text-align: center;
-    }
-
-    .profile-pic-container {
-        position: relative;
-        display: inline-block;
-        margin-bottom: 20px;
-    }
-
-    .profile-pic {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        border: 3px solid #007BFF;
-        object-fit: cover;
-    }
-
-    #uploadForm input[type="file"] {
-        display: none;
-    }
-
-    .custom-upload-btn {
-        background-color: #007BFF;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-bottom: 20px;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-    }
-
-    .custom-upload-btn:hover {
-        background-color: #0056b3;
-    }
-
-    .form-style {
-        margin: 20px 0;
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: #fafafa;
-        max-width: 400px;
-        text-align: left;
-        display: inline-block;
-    }
-
-    .form-style h3 {
-        font-size: 18px;
-        margin-bottom: 15px;
-        color: #333;
-        border-bottom: 2px solid #007BFF;
-        padding-bottom: 8px;
-    }
-
-    .form-style label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 600;
-        color: #333;
-    }
-
-    .form-style input[type="text"],
-    .form-style input[type="password"] {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 14px;
-        box-sizing: border-box;
-        background-color: #f8f8f8;
-    }
-
-    .form-style button {
-        background-color: #007BFF;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s ease;
-    }
-
-    .form-style button:hover {
-        background-color: #0056b3;
-    }
-
-    @media (max-width: 600px) {
-        .profile-container {
-            padding: 10px;
-        }
-    }
-
-    .profile-actions button.back {
-        background-color: #FF4B4B;
-    }
-
-    .profile-actions button.back:hover {
-        background-color: #D73838;
-    }
-
-    .back {
-        width: 100%;
-        padding: 12px;
-        margin-top: 10px;
-        background-color: #007BFF;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        font-size: 18px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-</style>

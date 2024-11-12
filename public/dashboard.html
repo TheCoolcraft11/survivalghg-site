@@ -6,14 +6,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Floating Widget Selector</title>
     <link rel="stylesheet" href="widgets/css/widgets.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('./images/bg.webp');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 250px);
+            grid-template-rows: repeat(2, 250px);
+            gap: 120px;
+        }
+
+        .wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .field {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #d3d3d3;
+            border: 2px solid #555;
+            border-radius: 10px;
+            font-size: 1.2em;
+            color: #333;
+            cursor: pointer;
+            top: 50%
+        }
+
+        .floating-ui {
+            position: absolute;
+            padding: 15px;
+            background-color: white;
+            border: 2px solid #555;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .floating-ui p {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .floating-ui button {
+            display: block;
+            margin: 8px 0;
+            padding: 5px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 0.6rem 2rem;
+            display: flex;
+            justify-content: center;
+            background-color: rgba(28, 28, 28, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-left {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-left li {
+            font-size: 1.2rem;
+        }
+
+        .nav-left a {
+            text-decoration: none;
+            color: #fff;
+            transition: color 0.5s, border-bottom 0.5s;
+            padding-bottom: 5px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .nav-left a:hover {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .nav-left .active {
+            color: #4db1ff;
+            border-bottom: 2px solid #4db1ff;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #444;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            margin-top: 0.5rem;
+            min-width: 160px;
+        }
+
+        .dropdown-content a {
+            color: white;
+            padding: 0.5rem 1rem;
+            display: block;
+            text-decoration: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #555;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="grid-container">
-        <div class="field" id="field1" onclick="showFloatingUI(event, 'field1')">Field 1</div>
-        <div class="field" id="field2" onclick="showFloatingUI(event, 'field2')">Field 2</div>
-        <div class="field" id="field3" onclick="showFloatingUI(event, 'field3')">Field 3</div>
-        <div class="field" id="field4" onclick="showFloatingUI(event, 'field4')">Field 4</div>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="/console.html">Server</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal.html">Linux</a>
+                    <a href="users.html">Users</a>
+                    <a href="user-management.html">User Management</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="wrapper">
+        <div class="grid-container">
+            <div class="field" id="field1" onclick="showFloatingUI(event, 'field1')">Field 1</div>
+            <div class="field" id="field2" onclick="showFloatingUI(event, 'field2')">Field 2</div>
+            <div class="field" id="field3" onclick="showFloatingUI(event, 'field3')">Field 3</div>
+            <div class="field" id="field4" onclick="showFloatingUI(event, 'field4')">Field 4</div>
+            <div class="field" id="field5" onclick="showFloatingUI(event, 'field5')">Field 5</div>
+            <div class="field" id="field6" onclick="showFloatingUI(event, 'field6')">Field 6</div>
+            <div class="field" id="field7" onclick="showFloatingUI(event, 'field7')">Field 7</div>
+            <div class="field" id="field8" onclick="showFloatingUI(event, 'field8')">Field 8</div>
+        </div>
     </div>
 
     <div id="floatingUI" class="floating-ui">
@@ -21,304 +181,252 @@
     </div>
     <button onclick="exportToJSON()">Export Configuration</button>
     <button onclick="loadFromJSON()">Load Configuration</button>
+
+
+    <script>
+        let availableWidgets = [];
+        let placedWidgets = [];
+
+        function showFloatingUI(event, fieldId) {
+            const floatingUI = document.getElementById('floatingUI');
+            const field = document.getElementById(fieldId);
+
+            const fieldRect = field.getBoundingClientRect();
+            floatingUI.innerHTML = '  <p>Select a widget:</p>';
+
+            floatingUI.style.left = `${fieldRect.right + 10}px`;
+            floatingUI.style.top = `${fieldRect.top}px`;
+
+            floatingUI.setAttribute('data-field-id', fieldId);
+
+            floatingUI.style.display = 'block';
+            console.log(availableWidgets)
+            availableWidgets.forEach(widget => {
+                console.log('Test')
+                const widgetItem = document.createElement('div');
+                widgetItem.classList.add('widget-item');
+                widgetItem.innerHTML = `<button onclick="selectWidget(${widget.id})">${widget.title}</button>`
+                floatingUI.appendChild(widgetItem);
+            })
+        }
+
+        function selectWidget(widgetId) {
+            const floatingUI = document.getElementById('floatingUI');
+            const fieldId = floatingUI.getAttribute('data-field-id');
+            const field = document.getElementById(fieldId)
+
+            addWidget(widgetId, field);
+
+            closeFloatingUI();
+        }
+
+        function closeFloatingUI() {
+            const floatingUI = document.getElementById('floatingUI');
+            floatingUI.style.display = 'none';
+        }
+
+
+
+        async function getWidgets() {
+            try {
+                const response = await fetch('/widgets.json');
+                if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
+                availableWidgets = await response.json();
+            } catch (error) {
+                console.error('Fehler beim Abrufen der Widgets:', error);
+                availableWidgets = ['Error'];
+            }
+        }
+
+        function addWidget(widgetId, container) {
+            const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
+
+            if (widgetIndex > -1) {
+                const widget = availableWidgets[widgetIndex];
+                placedWidgets.push({
+                    fieldId: container.id,
+                    widgetId: widget.id,
+                    widgetTitle: widget.title
+                });
+
+                console.log(container)
+
+                container.classList.add('widget');
+
+                if (widget.color) {
+                    container.style.setProperty('--widget-bg-color', widget.color);
+                }
+                if (widget.accentColor) {
+                    container.style.setProperty('--widget-accent-color', widget.accentColor);
+                }
+                if (widget.progressColor) {
+                    container.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+                }
+                if (widget.progressBarColor) {
+                    container.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+                }
+
+                fetch(widget.html)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Netzwerkproblem beim Laden des Widgets: ' + response.statusText);
+                        return response.text();
+                    })
+                    .then(html => {
+
+                        container.innerHTML = html;
+                        container.querySelector('div').id = "widget_" + widgetId;
+                        container.outerHTML = container.innerHTML;
+                        const widgetElement = document.getElementById("widget_" + widgetId);
+
+                        if (widget.color) {
+                            widgetElement.style.setProperty('--widget-bg-color', widget.color);
+                        }
+                        if (widget.accentColor) {
+                            widgetElement.style.setProperty('--widget-accent-color', widget.accentColor);
+                        }
+                        if (widget.progressColor) {
+                            widgetElement.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+                        }
+                        if (widget.progressBarColor) {
+                            widgetElement.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+                        }
+
+
+                        if (widget.js) {
+                            const script = document.createElement('script');
+                            script.src = widget.js;
+                            script.async = true;
+                            document.body.appendChild(script);
+                        }
+
+                        availableWidgets.splice(widgetIndex, 1);
+
+                    })
+                    .catch(error => console.error('Fehler beim Laden des Widgets:', error));
+            }
+        }
+        async function exportToJSON() {
+            if (placedWidgets.length === 0) {
+                console.log('No widgets have been placed.');
+                return;
+            }
+
+            const widgetData = placedWidgets.map(widget => {
+                const widgetObj = availableWidgets.find(w => w.id === widget.widgetId);
+
+                return {
+                    fieldId: widget.fieldId,
+                    widgetId: widget.widgetId,
+                    widgetTitle: widget.widgetTitle,
+                    widgetDetails: widgetObj || {}
+                };
+            });
+
+            const token = sessionStorage.getItem('authToken');
+            const jsonData = JSON.stringify(widgetData, null, 2);
+            console.log(widgetData)
+            const response = await fetch('/api/dashboard-layout/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ layoutData: jsonData })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Dashboard layout saved successfully!');
+            } else {
+                alert('Error saving layout: ' + result.error);
+            }
+        }
+
+
+        async function loadFromJSON() {
+            const token = sessionStorage.getItem('authToken');
+            const response = await fetch('/api/dashboard-layout/load', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            console.log(result)
+            if (response.ok) {
+                const jsonData = result[0]?.dashboard_layout;
+                let widgetData;
+
+                if (typeof jsonData === 'string') {
+                    widgetData = JSON.parse(jsonData);
+                } else {
+                    widgetData = jsonData;
+                }
+
+                await getWidgets();
+
+                placedWidgets = [];
+                document.querySelectorAll('.field').forEach(field => {
+                    field.innerHTML = `Field ${field.id.replace('field', '')}`;
+                    field.classList.remove('widget');
+                });
+
+                // Reapply the widget configuration
+                widgetData.forEach(data => {
+                    const field = document.getElementById(data.fieldId);
+                    if (field) {
+                        addWidget(data.widgetId, field);
+                    }
+                });
+            } else {
+                alert('Error loading layout: ' + result.error);
+            }
+
+        }
+
+        getWidgets();
+
+        const token = sessionStorage.getItem('authToken');
+        function saveLayout(widgets) {
+            fetch('/save-layout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ widgets: widgets })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                })
+                .catch(error => console.error('Error saving layout:', error));
+        }
+
+
+        function loadLayout() {
+            fetch('/load-layout', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.layout) {
+                        renderLayout(data.layout);
+                    } else {
+                        console.log('No layout found');
+                    }
+                })
+                .catch(error => console.error('Error loading layout:', error));
+        }
+
+
+    </script>
 </body>
 
 </html>
-<style>
-    body,
-    html {
-        height: 100%;
-        margin: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #f0f0f0;
-    }
-
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(4, 250px);
-        grid-template-rows: repeat(2, 250px);
-        gap: 120px;
-    }
-
-    .field {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #d3d3d3;
-        border: 2px solid #555;
-        border-radius: 10px;
-        font-size: 1.2em;
-        color: #333;
-        cursor: pointer;
-    }
-
-    .floating-ui {
-        position: absolute;
-        padding: 15px;
-        background-color: white;
-        border: 2px solid #555;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        display: none;
-        z-index: 1000;
-    }
-
-    .floating-ui p {
-        margin: 0;
-        font-weight: bold;
-    }
-
-    .floating-ui button {
-        display: block;
-        margin: 8px 0;
-        padding: 5px;
-        width: 100%;
-        cursor: pointer;
-    }
-</style>
-<script>
-    let availableWidgets = [];
-    let placedWidgets = [];
-
-    function showFloatingUI(event, fieldId) {
-        const floatingUI = document.getElementById('floatingUI');
-        const field = document.getElementById(fieldId);
-
-        const fieldRect = field.getBoundingClientRect();
-        floatingUI.innerHTML = '  <p>Select a widget:</p>';
-
-        floatingUI.style.left = `${fieldRect.right + 10}px`;
-        floatingUI.style.top = `${fieldRect.top}px`;
-
-        floatingUI.setAttribute('data-field-id', fieldId);
-
-        floatingUI.style.display = 'block';
-        console.log(availableWidgets)
-        availableWidgets.forEach(widget => {
-            console.log('Test')
-            const widgetItem = document.createElement('div');
-            widgetItem.classList.add('widget-item');
-            widgetItem.innerHTML = `<button onclick="selectWidget(${widget.id})">${widget.title}</button>`
-            floatingUI.appendChild(widgetItem);
-        })
-    }
-
-    function selectWidget(widgetId) {
-        const floatingUI = document.getElementById('floatingUI');
-        const fieldId = floatingUI.getAttribute('data-field-id');
-        const field = document.getElementById(fieldId)
-
-        addWidget(widgetId, field);
-
-        closeFloatingUI();
-    }
-
-    function closeFloatingUI() {
-        const floatingUI = document.getElementById('floatingUI');
-        floatingUI.style.display = 'none';
-    }
-
-
-
-    async function getWidgets() {
-        try {
-            const response = await fetch('/widgets.json');
-            if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
-            availableWidgets = await response.json();
-        } catch (error) {
-            console.error('Fehler beim Abrufen der Widgets:', error);
-            availableWidgets = ['Error'];
-        }
-    }
-
-    function addWidget(widgetId, container) {
-        const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
-
-        if (widgetIndex > -1) {
-            const widget = availableWidgets[widgetIndex];
-            placedWidgets.push({
-                fieldId: container.id,
-                widgetId: widget.id,
-                widgetTitle: widget.title
-            });
-
-            console.log(container)
-
-            container.classList.add('widget');
-
-            if (widget.color) {
-                container.style.setProperty('--widget-bg-color', widget.color);
-            }
-            if (widget.accentColor) {
-                container.style.setProperty('--widget-accent-color', widget.accentColor);
-            }
-            if (widget.progressColor) {
-                container.style.setProperty('--widget-progress-bg-color', widget.progressColor);
-            }
-            if (widget.progressBarColor) {
-                container.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
-            }
-
-            fetch(widget.html)
-                .then(response => {
-                    if (!response.ok) throw new Error('Netzwerkproblem beim Laden des Widgets: ' + response.statusText);
-                    return response.text();
-                })
-                .then(html => {
-
-                    container.innerHTML = html;
-                    container.querySelector('div').id = "widget_" + widgetId;
-                    container.outerHTML = container.innerHTML;
-                    const widgetElement = document.getElementById("widget_" + widgetId);
-
-                    if (widget.color) {
-                        widgetElement.style.setProperty('--widget-bg-color', widget.color);
-                    }
-                    if (widget.accentColor) {
-                        widgetElement.style.setProperty('--widget-accent-color', widget.accentColor);
-                    }
-                    if (widget.progressColor) {
-                        widgetElement.style.setProperty('--widget-progress-bg-color', widget.progressColor);
-                    }
-                    if (widget.progressBarColor) {
-                        widgetElement.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
-                    }
-
-
-                    if (widget.js) {
-                        const script = document.createElement('script');
-                        script.src = widget.js;
-                        script.async = true;
-                        document.body.appendChild(script);
-                    }
-
-                    availableWidgets.splice(widgetIndex, 1);
-
-                })
-                .catch(error => console.error('Fehler beim Laden des Widgets:', error));
-        }
-    }
-    async function exportToJSON() {
-        if (placedWidgets.length === 0) {
-            console.log('No widgets have been placed.');
-            return;
-        }
-
-        const widgetData = placedWidgets.map(widget => {
-            const widgetObj = availableWidgets.find(w => w.id === widget.widgetId);
-
-            return {
-                fieldId: widget.fieldId,
-                widgetId: widget.widgetId,
-                widgetTitle: widget.widgetTitle,
-                widgetDetails: widgetObj || {}
-            };
-        });
-
-        const token = sessionStorage.getItem('authToken');
-        const jsonData = JSON.stringify(widgetData, null, 2);
-        console.log(widgetData)
-        const response = await fetch('http://localhost:3000/api/dashboard-layout/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ layoutData: jsonData })
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-            alert('Dashboard layout saved successfully!');
-        } else {
-            alert('Error saving layout: ' + result.error);
-        }
-    }
-
-
-    async function loadFromJSON() {
-        const token = sessionStorage.getItem('authToken');
-        const response = await fetch('http://localhost:3000/api/dashboard-layout/load', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const result = await response.json();
-        console.log(result)
-        if (response.ok) {
-            const jsonData = result[0]?.dashboard_layout;
-            let widgetData;
-
-            if (typeof jsonData === 'string') {
-                widgetData = JSON.parse(jsonData);
-            } else {
-                widgetData = jsonData;
-            }
-
-            await getWidgets();
-
-            placedWidgets = [];
-            document.querySelectorAll('.field').forEach(field => {
-                field.innerHTML = `Field ${field.id.replace('field', '')}`;
-                field.classList.remove('widget');
-            });
-
-            // Reapply the widget configuration
-            widgetData.forEach(data => {
-                const field = document.getElementById(data.fieldId);
-                if (field) {
-                    addWidget(data.widgetId, field);
-                }
-            });
-        } else {
-            alert('Error loading layout: ' + result.error);
-        }
-
-    }
-
-    getWidgets();
-
-    const token = sessionStorage.getItem('authToken');
-    function saveLayout(widgets) {
-        fetch('/save-layout', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ widgets: widgets })
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-            })
-            .catch(error => console.error('Error saving layout:', error));
-    }
-
-
-    function loadLayout() {
-        fetch('/load-layout', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.layout) {
-                    renderLayout(data.layout);
-                } else {
-                    console.log('No layout found');
-                }
-            })
-            .catch(error => console.error('Error loading layout:', error));
-    }
-
-
-</script>
