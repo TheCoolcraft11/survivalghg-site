@@ -771,6 +771,74 @@ app.get('/api/backups', authenticateToken, (req, res) => {
     });
 });
 
+app.get('/api/backups/status', async (req, res) => {
+    const backupFiles = getBackupFiles();
+
+    if (!backupFiles || backupFiles.length < 2) {
+        return res.status(404).json({ message: 'Not enough backups found to compare.' });
+    }
+
+    const latestBackup = path.join(BACKUP_DIR, backupFiles[0].file);
+    const previousBackup = path.join(BACKUP_DIR, backupFiles[1].file);
+    const latestSize = getFileSize(latestBackup);
+    const previousSize = getFileSize(previousBackup);
+    const percentChange = ((latestSize - previousSize) / previousSize) * 100;
+    let estimatedCompletion = 'N/A';
+    if (latestSize < previousSize) {
+        estimatedCompletion = await estimateCompletionTime(latestBackup);
+    }
+
+
+    res.json({
+        latestBackupFile: backupFiles[0].file,
+        previousBackupFile: backupFiles[1].file,
+        latestBackupSize: getFileSize(latestBackup),
+        previousBackupSize: getFileSize(previousBackup),
+        percentChange: getFileSize(latestBackup) / getFileSize(previousBackup),
+        estimatedTimeToComplete: estimatedCompletion
+    });
+});
+
+const estimateCompletionTime = (filePath) => {
+    return new Promise((resolve) => {
+        const initialSize = getFileSize(filePath);
+
+        setTimeout(() => {
+            const newSize = getFileSize(filePath);
+            const sizeGrowth = newSize - initialSize;
+
+            if (sizeGrowth <= 0) {
+                resolve('Unable to estimate: no size growth detected');
+            } else {
+                const timeRemaining = (newSize / sizeGrowth) * 1000;
+                resolve(timeRemaining);
+            }
+        }, 5000);
+    });
+};
+
+
+const getFileSize = (filePath) => {
+    const stats = fs.statSync(filePath);
+    return stats.size;
+};
+
+
+const getBackupFiles = () => {
+    const files = fs.readdirSync(BACKUP_DIR)
+        .filter(file => file.endsWith('.tar.gz'))
+        .map(file => {
+            return {
+                file,
+                mtime: fs.statSync(path.join(BACKUP_DIR, file)).mtime
+            };
+        });
+    files.sort((a, b) => b.mtime - a.mtime);
+
+    return files.length >= 2 ? files : null;
+};
+
+
 app.get('/download/:filename', authenticateToken, (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(BACKUP_DIR, filename);
@@ -801,6 +869,7 @@ app.delete('/api/backups/:filename', authenticateToken, (req, res) => {
 app.get('/users', authenticateToken, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
+
 
 
 const wServer1 = http.createServer();
@@ -906,7 +975,6 @@ wss2.on('connection', (ws, req) => {
     }
 
     console.log('New WebSocket connection');
-    const scriptPath = '/bin/login';
 
     const shell = pty.spawn('bash', [], {
         name: 'xterm-color',
