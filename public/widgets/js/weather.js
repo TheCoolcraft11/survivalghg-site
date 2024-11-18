@@ -1,26 +1,22 @@
 (function () {
     const weatherElement = document.getElementById('weatherInfo');
     const weatherIconElement = document.getElementById('weatherIcon');
-    const apiKey = 'e5fc7a5689d97b1c13602b6b961f634a';
-    const city = 'Leutkirch';
+    const city = 'Leutkirch'
 
     function fetchWeather() {
-        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=de`)
+        fetch(`/weather?city=${city}`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Netzwerkproblem: ' + response.statusText);
+                    throw new Error('Fehler beim Laden der Wetterdaten');
                 }
                 return response.json();
             })
             .then(data => {
-                const temperature = data.main.temp;
-                const description = data.weather[0].description;
-                const iconCode = data.weather[0].icon;
+                const temperature = data.temperature;
+                const description = data.description;
+                const iconUrl = data.iconUrl;
 
                 weatherElement.innerText = `Temperatur: ${temperature}°C, Zustand: ${description}`;
-
-                const iconUrl = `http://openweathermap.org/img/wn/${iconCode}@4x.png`;
-
                 weatherIconElement.src = iconUrl;
                 weatherIconElement.style.display = 'inline';
             })

@@ -842,7 +842,65 @@ app.get('/users', authenticateToken, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
 
+app.get('/weather', async (req, res) => {
+    const city = req.query.city;
+    if (!city) {
+        return res.status(400).send({ error: 'City is required' });
+    }
 
+    const apiKey = process.env.WEATHER_API;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=de`;
+
+    try {
+        const response = await axios.get(url);
+        const data = response.data;
+
+        const temperature = data.main.temp;
+        const description = data.weather[0].description;
+        const iconCode = data.weather[0].icon;
+        const iconUrl = `http://openweathermap.org/img/wn/${iconCode}@4x.png`;
+
+        res.json({
+            temperature,
+            description,
+            iconUrl
+        });
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+        res.status(500).send({ error: 'Error fetching weather data' });
+    }
+});
+
+app.post('/api/tetris/highscore', (req, res) => {
+    const { name, score } = req.body;
+
+    if (!name || !score) {
+        return res.status(400).send('Name und Score sind erforderlich.');
+    }
+
+    const query = 'INSERT INTO highscore (name, score) VALUES (?, ?)';
+
+    db.query(query, [name, score], (err, results) => {
+        if (err) {
+            console.error('Fehler beim Einfügen des Highscores:', err.message);
+            return res.status(500).send('Daten konnten nicht gespeichert werden.');
+        }
+        res.status(201).send(`Highscore gespeichert mit ID: ${results.insertId}`);
+    });
+});
+
+app.get('/api/tetris/highscores', (req, res) => {
+    const query = 'SELECT * FROM highscore ORDER BY score DESC LIMIT 10';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Fehler beim Abrufen der Highscores:', err.message);
+            return res.status(500).send('Fehler beim Abrufen der Highscores.');
+        }
+
+        res.status(200).json(results);
+    });
+});
 
 const wServer1 = http.createServer();
 const wServer2 = http.createServer();
