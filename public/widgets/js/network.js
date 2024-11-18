@@ -5,7 +5,7 @@ async function loadNetworkWidget() {
         const networkContainer = document.getElementById('network-info-container');
         networkContainer.innerHTML = ''; // Clear previous data
 
-        const filteredNetwork = data.network.filter(iface => iface.iface !== 'lo'); // Exclude loopback interface
+        const filteredNetwork = data.network.filter(iface => iface.iface !== 'lo');
         if (filteredNetwork.length === 0) {
             networkContainer.innerHTML = '<div class="info-text">No active network interfaces found.</div>';
             return;

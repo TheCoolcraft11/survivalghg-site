@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Information</title>
-
+    <title>Floating Widget Selector</title>
+    <link rel="stylesheet" href="widgets/css/widgets.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,63 +16,61 @@
             background-position: center;
             height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        h1 {
-            color: #333;
-            text-align: center;
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 250px);
+            grid-template-rows: repeat(2, 250px);
+            gap: 120px;
         }
 
-        .container {
+        .wrapper {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
         }
 
-        .card {
-            background: gray;
-            border-radius: 16px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 300px;
-            transition: transform 0.2s;
-            opacity: 0.75;
+        .field {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #d3d3d3;
+            border: 2px solid #555;
+            border-radius: 10px;
+            font-size: 1.2em;
             color: #333;
+            cursor: pointer;
+            top: 50%
         }
 
-        .card:hover {
-            transform: scale(1.05);
+        .floating-ui {
+            position: absolute;
+            padding: 15px;
+            background-color: white;
+            border: 2px solid #555;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
         }
 
+        .floating-ui p {
+            margin: 0;
+            font-weight: bold;
+        }
 
-        .progress {
+        .floating-ui button {
+            display: block;
+            margin: 8px 0;
+            padding: 5px;
             width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-            margin: 10px 0;
-            color: #333;
+            cursor: pointer;
         }
-
-        .progress-bar {
-            height: 20px;
-            background-color: #76c7c0;
-            text-align: center;
-            color: white;
-            line-height: 20px;
-            transition: width 0.3s;
-            color: #333;
-        }
-
-        .info-text {
-            margin: 10px 0;
-        }
-
 
         .navbar {
             position: fixed;
@@ -144,6 +142,12 @@
         .dropdown:hover .dropdown-content {
             display: block;
         }
+
+        .toggle-btn {
+            right: 0%;
+            bottom: 0%;
+            position: absolute;
+        }
     </style>
 </head>
 
@@ -165,151 +169,241 @@
         </ul>
     </nav>
 
-    <div class="container" id="info"></div>
-
-    <script>
-        const token = sessionStorage.getItem('authToken');
-        function parseJwt(token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-
-                return JSON.parse(jsonPayload);
-            } catch (e) {
-                return null;
-            }
-        }
-
-        if (token) {
-            const userData = parseJwt(token);
-            if (userData && userData.role === 'admin') {
-                document.getElementById('adminDropdown').style.display = 'block';
-            }
-        }
-
-        async function fetchSystemInfo() {
-            try {
-                const response = await fetch('/api/info');
-                const data = await response.json();
-                console.log(data)
-                displayInfo(data);
-            } catch (error) {
-                console.error('Error fetching system info:', error);
-                document.getElementById('info').innerText = 'Failed to fetch system info';
-            }
-        }
-
-        function displayInfo(data) {
-            const infoDiv = document.getElementById('info');
-            if (!data || !data.memory) {
-                infoDiv.innerText = 'Error: No memory data available.';
-                return;
-            }
-
-            const totalMemory = data.memory.total || '0 MB';
-            const usedMemory = data.memory.used || '0 MB';
-
-            const usedMemoryValue = parseFloat(usedMemory.replace(' MB', '')) || 0;
-            const totalMemoryValue = parseFloat(totalMemory.replace(' MB', '')) || 1;
-
-            let cpuCard = document.querySelector('.card.cpu');
-            let memoryCard = document.querySelector('.card.memory');
-            let diskCard = document.querySelector('.card.disks');
-            let networkCard = document.querySelector('.card.network');
-
-            // CPU Card
-            if (!cpuCard) {
-                cpuCard = document.createElement('div');
-                cpuCard.classList.add('card', 'cpu');
-                infoDiv.appendChild(cpuCard);
-            }
-            const cpuUsage = data.cpu.usage || 0;
-            cpuCard.innerHTML = `
-        <h2>CPU</h2>
-        <div class="info-text">Manufacturer: ${data.cpu.manufacturer}</div>
-        <div class="info-text">Brand: ${data.cpu.brand}</div>
-        <div class="info-text">Cores: ${data.cpu.cores}</div>
-        <div class="progress">
-            <div class="progress-bar" style="width: ${cpuUsage}%;">${cpuUsage}%</div>
+    <div class="wrapper">
+        <div class="grid-container">
+            <div class="field" id="field1" onclick="showFloatingUI(event, 'field1')">Field 1</div>
+            <div class="field" id="field2" onclick="showFloatingUI(event, 'field2')">Field 2</div>
+            <div class="field" id="field3" onclick="showFloatingUI(event, 'field3')">Field 3</div>
+            <div class="field" id="field4" onclick="showFloatingUI(event, 'field4')">Field 4</div>
+            <div class="field" id="field5" onclick="showFloatingUI(event, 'field5')">Field 5</div>
+            <div class="field" id="field6" onclick="showFloatingUI(event, 'field6')">Field 6</div>
+            <div class="field" id="field7" onclick="showFloatingUI(event, 'field7')">Field 7</div>
+            <div class="field" id="field8" onclick="showFloatingUI(event, 'field8')">Field 8</div>
         </div>
-    `;
+    </div>
 
-            // Memory Card
-            if (!memoryCard) {
-                memoryCard = document.createElement('div');
-                memoryCard.classList.add('card', 'memory');
-                infoDiv.appendChild(memoryCard);
-            }
-            memoryCard.innerHTML = `
-        <h2>Memory</h2>
-        <div class="info-text">Total RAM: ${totalMemory}</div>
-        <div class="info-text">Used RAM: ${usedMemory}</div>
-        <div class="progress">
-            <div class="progress-bar" style="width: ${(usedMemoryValue / totalMemoryValue * 100).toFixed(2)}%;">
-                ${usedMemory} / ${totalMemory}
-            </div>
-        </div>
-    `;
+    <div id="floatingUI" class="floating-ui">
+        <p>Select a widget:</p>
+    </div>
 
-            // Disk Card
-            if (!diskCard) {
-                diskCard = document.createElement('div');
-                diskCard.classList.add('card', 'disks');
-                infoDiv.appendChild(diskCard);
-            }
-            diskCard.innerHTML = `
-        <h2>Disks</h2>
-        ${data.disks.map(disk => `
-            <div class="info-text">${disk.name}: ${disk.size}</div>
-            <div class="progress">
-                <div class="progress-bar" style="width: ${(parseFloat(disk.used.replace(' GB', '')) / parseFloat(disk.size.replace(' GB', '')) * 100).toFixed(2)}%;">
-                    ${disk.used} / ${disk.size}
-                </div>
-            </div>
-        `).join('')}
-    `;
-
-            // Network Card with Traffic Info
-            if (!networkCard) {
-                networkCard = document.createElement('div');
-                networkCard.classList.add('card', 'network');
-                infoDiv.appendChild(networkCard);
-            }
-
-            // Filter out 'lo' (loopback) interfaces
-            const filteredNetwork = data.network.filter(iface => iface.iface !== 'lo');
-
-            // Render the filtered network interfaces
-            const networkContent = filteredNetwork.length > 0 ? filteredNetwork.map(iface => `
-        <div class="info-text">
-            <strong>Interface:</strong> ${iface.iface}<br>
-            <strong>MAC:</strong> ${iface.mac || 'N/A'}<br>
-            <strong>IPv4:</strong> ${iface.ip || 'N/A'}<br>
-            <strong>IPv6:</strong> ${iface.ip6 || 'N/A'}<br>
-            <strong>Data Sent:</strong>  ${bytestoMB(iface.tx_bytes) + ' MB' || '0 MB'}<br>
-            <strong>Data Received:</strong> ${bytestoMB(iface.rx_bytes) + ' MB' || '0 MB'}<br>
-            <strong>Upload Speed:</strong> ${iface.upload || '0 MB'} B/s<br>
-            <strong>Download Speed:</strong> ${iface.download || '0 MB'} B/s
-        </div>
-    
-    `).join('') : '<div class="info-text">No active network interfaces found.</div>';
-
-            networkCard.innerHTML = `
-        <h2>Network</h2>
-        ${networkContent}
-    `;
-        }
-
-        function bytestoMB(bytes) {
-            return (bytes / (1024 * 1024)).toFixed(2);
-        }
-
-        fetchSystemInfo();
-        setInterval(fetchSystemInfo, 2000);
-    </script>
+    <div class="button-container" style="display: none;">
+        <button onclick="exportToJSON()">Save Configuration</button>
+        <button onclick="exportToJSON(true)">Delete Configuration</button>
+    </div>
+    <button onclick="toggleButtons(true)" class="toggle-btn">Edit</button>
 </body>
 
 </html>
+<script>
+    let availableWidgets = [];
+    let placedWidgets = [];
+
+    function showFloatingUI(event, fieldId) {
+        const floatingUI = document.getElementById('floatingUI');
+        const field = document.getElementById(fieldId);
+
+        const fieldRect = field.getBoundingClientRect();
+        floatingUI.innerHTML = '  <p>Select a widget:</p>';
+
+        floatingUI.style.left = `${fieldRect.right + 10}px`;
+        floatingUI.style.top = `${fieldRect.top}px`;
+
+        floatingUI.setAttribute('data-field-id', fieldId);
+
+        floatingUI.style.display = 'block';
+        availableWidgets.forEach(widget => {
+            const widgetItem = document.createElement('div');
+            widgetItem.classList.add('widget-item');
+            widgetItem.innerHTML = `<button onclick="selectWidget(${widget.id})">${widget.title}</button>`
+            floatingUI.appendChild(widgetItem);
+        })
+    }
+
+    function selectWidget(widgetId) {
+        const floatingUI = document.getElementById('floatingUI');
+        const fieldId = floatingUI.getAttribute('data-field-id');
+        const field = document.getElementById(fieldId)
+
+        addWidget(widgetId, field);
+
+        closeFloatingUI();
+    }
+
+    function closeFloatingUI() {
+        const floatingUI = document.getElementById('floatingUI');
+        floatingUI.style.display = 'none';
+    }
+
+
+
+    async function getWidgets() {
+        try {
+            const response = await fetch('/widgets.json');
+            if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
+            availableWidgets = await response.json();
+        } catch (error) {
+            console.error('Fehler beim Abrufen der Widgets:', error);
+            availableWidgets = ['Error'];
+        }
+    }
+
+    function addWidget(widgetId, container) {
+        const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
+
+        if (widgetIndex > -1) {
+            const widget = availableWidgets[widgetIndex];
+            placedWidgets.push({
+                fieldId: container.id,
+                widgetId: widget.id,
+                widgetTitle: widget.title
+            });
+
+            container.classList.add('widget');
+
+            if (widget.color) {
+                container.style.setProperty('--widget-bg-color', widget.color);
+            }
+            if (widget.accentColor) {
+                container.style.setProperty('--widget-accent-color', widget.accentColor);
+            }
+            if (widget.progressColor) {
+                container.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+            }
+            if (widget.progressBarColor) {
+                container.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+            }
+
+            fetch(widget.html)
+                .then(response => {
+                    if (!response.ok) throw new Error('Netzwerkproblem beim Laden des Widgets: ' + response.statusText);
+                    return response.text();
+                })
+                .then(html => {
+
+                    container.innerHTML = html;
+                    container.querySelector('div').id = "widget_" + widgetId;
+                    container.outerHTML = container.innerHTML;
+                    const widgetElement = document.getElementById("widget_" + widgetId);
+
+                    if (widget.color) {
+                        widgetElement.style.setProperty('--widget-bg-color', widget.color);
+                    }
+                    if (widget.accentColor) {
+                        widgetElement.style.setProperty('--widget-accent-color', widget.accentColor);
+                    }
+                    if (widget.progressColor) {
+                        widgetElement.style.setProperty('--widget-progress-bg-color', widget.progressColor);
+                    }
+                    if (widget.progressBarColor) {
+                        widgetElement.style.setProperty('--widget-progress-bar-color', widget.progressBarColor);
+                    }
+
+
+                    if (widget.js) {
+                        const script = document.createElement('script');
+                        script.src = widget.js;
+                        script.async = true;
+                        document.body.appendChild(script);
+                    }
+
+                    availableWidgets.splice(widgetIndex, 1);
+
+                })
+                .catch(error => console.error('Fehler beim Laden des Widgets:', error));
+        }
+    }
+    async function exportToJSON(remove) {
+        if (placedWidgets.length === 0) {
+            return;
+        }
+
+        const widgetData = placedWidgets.map(widget => {
+            const widgetObj = availableWidgets.find(w => w.id === widget.widgetId);
+
+            return {
+                fieldId: widget.fieldId,
+                widgetId: widget.widgetId,
+                widgetTitle: widget.widgetTitle,
+                widgetDetails: widgetObj || {}
+            };
+        });
+
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const jsonData = remove ? null : JSON.stringify(widgetData, null, 2);
+            const response = await fetch('/api/dashboard-layout/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ layoutData: jsonData })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Dashboard layout saved successfully!');
+            } else {
+                alert('Error saving layout: ' + result.error);
+            }
+        }
+    }
+
+
+    async function loadFromJSON() {
+        const token = sessionStorage.getItem('authToken');
+        if (token) {
+            const response = await fetch('/api/dashboard-layout/load', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                const jsonData = result[0]?.dashboard_layout;
+                let widgetData;
+
+                if (typeof jsonData === 'string') {
+                    widgetData = JSON.parse(jsonData);
+                } else {
+                    widgetData = jsonData;
+                }
+
+                await getWidgets();
+
+                placedWidgets = [];
+                document.querySelectorAll('.field').forEach(field => {
+                    field.innerHTML = `Field ${field.id.replace('field', '')}`;
+                    field.classList.remove('widget');
+                });
+
+                if (widgetData) {
+                    widgetData.forEach(data => {
+                        const field = document.getElementById(data.fieldId);
+                        if (field) {
+                            addWidget(data.widgetId, field);
+                        }
+                    });
+                }
+            } else {
+                alert('Error loading layout: ' + result.error);
+            }
+        }
+    }
+
+    function toggleButtons() {
+        const buttonContainer = document.querySelector('.button-container');
+        if (buttonContainer.style.display === "none") {
+            buttonContainer.style.display = "flex"
+        } else {
+            buttonContainer.style.display = "none"
+        }
+    }
+
+    getWidgets();
+
+    window.onload = loadFromJSON();
+</script>

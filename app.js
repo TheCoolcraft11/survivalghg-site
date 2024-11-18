@@ -26,23 +26,15 @@ const app = express();
 const logFilePath = '/home/max/SurvivalGHG/logs/latest.log';
 const screenSessionName = 'SurvivalGHG';
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
+    connectionLimit: 10,
     host: 'localhost',
     user: process.env.USER,
     password: process.env.PASSWORD,
-    database: process.env.DATABASE
+    database: process.env.DATABASE,
+    waitForConnections: true,
+    queueLimit: 0
 });
-
-
-
-db.connect(err => {
-    if (err) {
-        console.error('Database connection failed:', err.stack);
-        return;
-    }
-    console.log('Connected to MySQL');
-});
-
 
 
 function generateUniqueId(ip, userAgentString) {
@@ -784,9 +776,7 @@ app.get('/api/backups/status', async (req, res) => {
     const previousSize = getFileSize(previousBackup);
     const percentChange = ((latestSize - previousSize) / previousSize) * 100;
     let estimatedCompletion = 'N/A';
-    if (latestSize < previousSize) {
-        estimatedCompletion = await estimateCompletionTime(latestBackup);
-    }
+
 
 
     res.json({
@@ -795,27 +785,9 @@ app.get('/api/backups/status', async (req, res) => {
         latestBackupSize: getFileSize(latestBackup),
         previousBackupSize: getFileSize(previousBackup),
         percentChange: getFileSize(latestBackup) / getFileSize(previousBackup),
-        estimatedTimeToComplete: estimatedCompletion
     });
 });
 
-const estimateCompletionTime = (filePath) => {
-    return new Promise((resolve) => {
-        const initialSize = getFileSize(filePath);
-
-        setTimeout(() => {
-            const newSize = getFileSize(filePath);
-            const sizeGrowth = newSize - initialSize;
-
-            if (sizeGrowth <= 0) {
-                resolve('Unable to estimate: no size growth detected');
-            } else {
-                const timeRemaining = (newSize / sizeGrowth) * 1000;
-                resolve(timeRemaining);
-            }
-        }, 5000);
-    });
-};
 
 
 const getFileSize = (filePath) => {
@@ -874,7 +846,6 @@ app.get('/users', authenticateToken, (req, res) => {
 
 const wServer1 = http.createServer();
 const wServer2 = http.createServer();
-
 const wss1 = new WebSocketServer({ server: wServer1 });
 
 
@@ -918,6 +889,7 @@ app.post('/api/dashboard-layout/save', authenticateToken, async (req, res) => {
         res.status(200).json({ message: 'Layout updated successfully', layoutData: layoutData });
     });
 });
+
 
 
 app.get('/api/dashboard-layout/load', authenticateToken, async (req, res) => {

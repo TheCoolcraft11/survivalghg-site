@@ -7,6 +7,4 @@ document.getElementById("generate").addEventListener("click", () => {
         password += charset[randomIndex];
     }
     document.getElementById("password").value = password;
-    alert(password);
-    document.body.innerHTML = password;
 });

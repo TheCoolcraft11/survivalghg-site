@@ -62,5 +62,11 @@
         "title": "Network",
         "js": "./widgets/js/network.js",
         "html": "./widgets/html/network.html"
+    },
+    {
+        "id": 11,
+        "title": "Random",
+        "js": "./widgets/js/random.js",
+        "html": "./widgets/html/random.html"
     }
 ]

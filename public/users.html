@@ -289,7 +289,6 @@
                 });
 
                 const users = await response.json();
-                console.log(users);
 
                 const userTable = document.getElementById('user-table-body');
                 userTable.innerHTML = '';
@@ -397,7 +396,6 @@
     }
 
     async function changeRole(id, newRole) {
-        console.log(id + " + " + newRole);
 
         const token = sessionStorage.getItem('authToken');
         if (token) {
@@ -428,7 +426,6 @@
     }
 
     async function changeName(id, newName) {
-        console.log(id + " + " + newName);
 
         const token = sessionStorage.getItem('authToken');
         if (token) {
@@ -458,7 +455,6 @@
     }
 
     async function changePassword(id, newPassword) {
-        console.log(id + " + " + newPassword);
 
         const token = sessionStorage.getItem('authToken');
         if (token) {

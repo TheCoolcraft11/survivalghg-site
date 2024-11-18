@@ -2,7 +2,6 @@ async function loadMemoryWidget() {
     try {
         const response = await fetch('/api/info');
         const data = await response.json();
-        console.log("R: " + response.memory + " M: " + data.memory.used)
         document.getElementById('memory-total').innerText = data.memory.total || '0 MB';
         document.getElementById('memory-used').innerText = data.memory.used || '0 MB';
 

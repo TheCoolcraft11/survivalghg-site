@@ -267,7 +267,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.message) {
-                        console.log(data.message)
                         document.getElementById('name').innerHTML = data.message.username;
                         document.getElementById('role').innerHTML = data.message.role;
                         document.getElementById('profile_picture').src = data.message.profile_picture;

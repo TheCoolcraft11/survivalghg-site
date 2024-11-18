@@ -1,5 +1,133 @@
-<div class="widget widget-random-number">
-    <h3>Zufallszahl Generator</h3>
-    <p>Zufallszahl: <span class="randomNumber">Lädt...</span></p>
-    <button onclick="generateRandomNumber()">Generiere Zahl</button>
+<div class="card random">
+    <div class="widget widget-game">
+        <div class="game-container">
+            <div class="coin-container" id="coin-container">
+                <div class="coin" id="coin">
+                    <span id="coin-face">🪙</span>
+                </div>
+            </div>
+            <div class="dice-container" id="dice-container" style="display: none;">
+                <div class="dice" id="dice">
+                    <span id="dice-face">1</span>
+                </div>
+            </div>
+        </div>
+        <button id="roll-btn" onclick="roll()">Starten</button>
+        <button id="toggle-btn" onclick="toggleGame()">Würfeln / Münzwurf</button>
+    </div>
 </div>
+
+
+</html>
+<style>
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin: 20px 0;
+        overflow: visible;
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+
+    .coin-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+        overflow: visible;
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+
+    .coin {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #FFD700;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2em;
+        text-align: center;
+        border: 2px solid #333;
+        transform-style: preserve-3d;
+        transition: transform 1s ease-in-out;
+        position: relative;
+        z-index: 10;
+    }
+
+    .dice-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .dice {
+        width: 100px;
+        height: 100px;
+        background-color: #fff;
+        border: 5px solid #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2em;
+        text-align: center;
+        border-radius: 10px;
+        transform-style: preserve-3d;
+        transition: transform 1s ease;
+    }
+
+    @keyframes coinFlip {
+        0% {
+            transform: rotateY(0deg);
+        }
+
+        50% {
+            transform: rotateY(1800deg) scale(1.5);
+        }
+
+        100% {
+            transform: rotateY(3600deg);
+        }
+    }
+
+    @keyframes rollAnimation {
+        0% {
+            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+
+        25% {
+            transform: rotateX(1800deg) rotateY(0deg) rotateZ(0deg);
+        }
+
+        50% {
+            transform: rotateX(1800deg) rotateY(1800deg) rotateZ(0deg);
+        }
+
+        75% {
+            transform: rotateX(1800deg) rotateY(1800deg) rotateZ(1800deg);
+        }
+
+        100% {
+            transform: rotateX(1800deg) rotateY(1800deg) rotateZ(3600deg);
+        }
+    }
+
+    .flipping {
+        animation: coinFlip 1s cubic-bezier(0.35, 0.85, 0.45, 1) forwards;
+    }
+
+    .rolling {
+        animation: rollAnimation 1s cubic-bezier(0.35, 0.85, 0.45, 1) forwards;
+    }
+
+    #coin-face,
+    #dice-face {
+        position: absolute;
+        font-size: 1.5em;
+        color: #333;
+    }
+</style>

@@ -443,7 +443,6 @@
 
         //socket = new WebSocket(changeUrlPort(window.location.href, 8080));
         socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws1');
-        console.log(window.location.origin);
 
         socket.onmessage = function (event) {
             const outputDiv = document.getElementById('console');
@@ -704,7 +703,6 @@
     });
 
     const iframe = document.getElementById('bluemap-iframe');
-    console.log(iframe)
 
 
 
