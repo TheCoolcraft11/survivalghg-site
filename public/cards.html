@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pick a Card</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .card {
+            width: 120px;
+            height: 180px;
+            background-color: #fff;
+            border-radius: 15px;
+            border: 2px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-in-out;
+            overflow: hidden;
+            background-color: transparent;
+            /* Ensure no color overlay if image is used */
+        }
+
+        .card-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            /* Ensure number is above the background */
+        }
+
+        /* Specific color classes for non-image cards */
+        .red {
+            background-color: #d32f2f;
+        }
+
+        .blue {
+            background-color: #1976d2;
+        }
+
+        .green {
+            background-color: #388e3c;
+        }
+
+        .yellow {
+            background-color: #fbc02d;
+        }
+
+
+        .red {
+            background-color: #d32f2f;
+        }
+
+        .blue {
+            background-color: #1976d2;
+        }
+
+        .green {
+            background-color: #388e3c;
+        }
+
+        .yellow {
+            background-color: #fbc02d;
+        }
+
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1565c0;
+        }
+
+        .selected {
+            box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
+            transform: scale(1.3);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg) translateX(200px) rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg) translateX(200px) rotate(-360deg);
+            }
+        }
+
+        .spinning {
+            animation: spin 2s ease-in-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cards-container" id="cards-container"></div>
+
+    <form id="cardForm">
+        <input type="number" id="setSize" placeholder="Number of Cards" required value="10" min="1">
+
+        <label for="setAll">
+            <input type="checkbox" id="setAll" /> Set one image/color for all cards
+        </label>
+
+        <input type="file" id="cardImages" accept="image/*" multiple>
+        <button type="submit">Add Set of Cards</button>
+    </form>
+    <button type="random" onclick="addRandom(document.getElementById('setSize').value || 10)">Random Cards</button>
+
+
+
+    <button onclick="pickCard()">Pick a Card</button>
+
+    <script>
+        const cards = [];
+        document.getElementById('cardForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const setSize = parseInt(document.getElementById('setSize').value, 10);
+            const cardImagesInput = document.getElementById('cardImages');
+            const files = cardImagesInput.files;
+            const setAll = document.getElementById('setAll').checked;
+
+            if (setSize < 1 || isNaN(setSize)) {
+                alert("Please enter a valid number of cards.");
+                return;
+            }
+
+            const totalImages = files.length;
+            const colors = ['red', 'blue', 'green', 'yellow'];
+
+            if (setAll) {
+                let backgroundStyle = '';
+
+                if (totalImages > 0) {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        backgroundStyle = `background-image: url(${event.target.result}); background-size: cover; background-position: center;`;
+
+                        createAllCards(backgroundStyle, setSize);
+                    };
+
+                    reader.readAsDataURL(file);
+                } else {
+                    const randomColor = colors[getRndInteger(0, colors.length)];
+                    backgroundStyle = `background-color: ${randomColor};`;
+
+                    createAllCards(backgroundStyle, setSize);
+                }
+            } else {
+                let imageIndex = 0;
+
+                for (let i = 0; i < setSize; i++) {
+                    const newCard = document.createElement('div');
+                    newCard.classList.add('card');
+                    newCard.id = 'card' + cards.length;
+                    cards.push(newCard);
+
+                    if (imageIndex < totalImages) {
+                        const file = files[imageIndex];
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            newCard.style.backgroundImage = `url(${event.target.result})`;
+                            newCard.style.backgroundSize = 'cover';
+                            newCard.style.backgroundPosition = 'center';
+                            newCard.innerHTML = `<span class="card-number">${i + 1}</span>`;
+                        };
+                        reader.readAsDataURL(file);
+                        imageIndex++;
+                    } else {
+                        const randomColor = colors[getRndInteger(0, colors.length)];
+                        newCard.classList.add(randomColor);
+                        newCard.innerHTML = `<span class="card-number">${i + 1}</span>`;
+                    }
+
+                    document.getElementById('cards-container').appendChild(newCard);
+                    resetCardPositions();
+                }
+            }
+
+            document.getElementById('cardImages').value = '';
+            document.getElementById('setSize').value = '';
+            document.getElementById('setAll').checked = false;
+        });
+
+        function createAllCards(backgroundStyle, setSize) {
+            for (let i = 0; i < setSize; i++) {
+                const newCard = document.createElement('div');
+                newCard.classList.add('card');
+                newCard.id = 'card' + cards.length;
+                cards.push(newCard);
+
+                newCard.style = backgroundStyle;
+                newCard.innerHTML = `<span class="card-number">${i + 1}</span>`;
+
+                document.getElementById('cards-container').appendChild(newCard);
+            }
+
+            resetCardPositions();
+        }
+
+        function resetCardPositions() {
+            const cards = document.querySelectorAll('.card');
+            const totalCards = cards.length;
+            const angleIncrement = 360 / totalCards;
+
+            cards.forEach((card, index) => {
+                const angle = index * angleIncrement;
+                card.style.transform = `rotate(${angle}deg) translateX(200px) rotate(-${angle}deg)`;
+                card.style.transition = "transform 0.5s ease-in-out";
+            });
+        }
+
+        function getRndInteger(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+
+        function resetCardPositions() {
+            const cards = document.querySelectorAll('.card');
+            const totalCards = cards.length;
+            const angleIncrement = 360 / totalCards;
+
+            cards.forEach((card, index) => {
+                const angle = index * angleIncrement;
+                card.style.transform = `rotate(${angle}deg) translateX(200px) rotate(-${angle}deg)`;
+                card.style.transition = "transform 0.5s ease-in-out";
+            });
+        }
+
+        function getRndInteger(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+
+        function resetCardPositions() {
+            const cards = document.querySelectorAll('.card');
+            const totalCards = cards.length;
+            const angleIncrement = 360 / totalCards;
+
+            cards.forEach((card, index) => {
+                const angle = index * angleIncrement;
+                card.style.transform = `rotate(${angle}deg) translateX(200px) rotate(-${angle}deg)`;
+                card.style.transition = "transform 0.5s ease-in-out";
+            });
+        }
+
+
+
+        function resetCardPositions() {
+            const cards = document.querySelectorAll('.card');
+            const totalCards = cards.length;
+            const angleIncrement = 360 / totalCards;
+
+            cards.forEach((card, index) => {
+                const angle = index * angleIncrement;
+                card.style.transform = `rotate(${angle}deg) translateX(200px) rotate(-${angle}deg)`;
+                card.style.transition = "transform 0.5s ease-in-out";
+            });
+        }
+
+        function pickCard() {
+            if (cards.length === 0) return;
+
+
+            cards.forEach(card => {
+                card.classList.remove('selected');
+                card.style.transition = 'transform 2s ease-in-out, opacity 0.5s ease-in-out';
+                card.style.opacity = "1";
+            });
+
+            cards.forEach(card => {
+                card.classList.add('spinning');
+            });
+
+            setTimeout(() => {
+                const randomCardIndex = Math.floor(Math.random() * cards.length);
+                const selectedCard = document.getElementById('card' + randomCardIndex);
+                selectedCard.classList.add('selected');
+                selectedCard.style.zIndex = 100;
+
+                selectedCard.style.transform = 'translateY(-100px)';
+            }, 2000);
+        }
+
+        async function addRandom(amount) {
+            const cardColors = ['red', 'blue', 'green', 'yellow'];
+
+            for (let i = 0; i < amount; i++) {
+                const cardNumber = getRndInteger(1, 10);
+                const cardColor = cardColors[getRndInteger(0, cardColors.length)];
+                const newCard = document.createElement('div');
+                newCard.classList.add('card', cardColor);
+                newCard.id = ('card' + cards.length)
+                cards.push(newCard)
+                newCard.innerHTML = `<span class="card-number">${cardNumber}</span>`;
+                document.getElementById('cards-container').appendChild(newCard);
+                resetCardPositions();
+
+                if (i < amount - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 20));
+                }
+            }
+        }
+
+        function getRndInteger(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+    </script>
+</body>
+
+</html>

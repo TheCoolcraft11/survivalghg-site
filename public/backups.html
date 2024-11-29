@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Backup List</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -163,7 +162,6 @@
             background-color: #007BFF;
             color: #fff;
             padding: 12px 18px;
-            /* Increased padding */
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -204,7 +202,6 @@
         <p>Loading...</p>
     </div>
 
-    <!-- Modal for Delete Confirmation -->
     <div id="delete-modal" class="modal">
         <div class="modal-content">
             <h3>Confirm Delete</h3>
@@ -286,18 +283,19 @@
                 li.className = 'backup-item';
 
                 li.innerHTML = `
-                    <div>
-                        <h2>${backup.name}</h2>
-                        <p class="details">
-                            <span>Size: ${backup.size}</span>
-                            <span>Created: ${new Date(backup.createdAt).toLocaleString()}</span>
-                        </p>
-                    </div>
-                    <div class="actions">
-                        <a href="${backup.downloadUrl}" class="download-btn">Download</a>
-                        <button onclick="promptDelete('${backup.name}')" class="delete-btn">Delete</button>
-                    </div>
-                `;
+             <div>
+                    <h2>${backup.name}</h2>
+                    <p class="details">
+                        <span>Size: ${backup.size}</span>
+                        <span>Created: ${new Date(backup.createdAt).toLocaleString()}</span>
+                    </p>
+                </div>
+                <div class="actions">
+                <a href="${backup.downloadUrl}?token=${token}" class="download-btn" target="_blank" download>Download</a>
+                <button onclick="promptDelete('${backup.name}')" class="delete-btn">Delete</button>
+            </div>
+`;
+
                 ul.appendChild(li);
             });
             listContainer.appendChild(ul);
@@ -339,6 +337,60 @@
                 closeModal();
             }
         }
+        async function downloadBackup(downloadUrl) {
+            const token = sessionStorage.getItem('authToken'); // Fetch token
+            if (!token) {
+                alert('Authentication token is missing. Please log in again.');
+                return;
+            }
+
+            try {
+                const response = await fetch(downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to download. Status: ${response.status}`);
+                }
+
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition
+                    ? contentDisposition.match(/filename="(.+)"/)?.[1]
+                    : downloadUrl.split('/').pop();
+
+                const stream = response.body;
+                const reader = stream.getReader();
+                const chunks = [];
+                let receivedLength = 0;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    receivedLength += value.length;
+                }
+
+                const blob = new Blob(chunks);
+                const fileUrl = window.URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = fileUrl;
+                downloadLink.download = filename || 'backup-file';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                window.URL.revokeObjectURL(fileUrl);
+                downloadLink.remove();
+
+                alert('Download completed!');
+            } catch (error) {
+                console.error('Error during download:', error.message);
+                alert('Failed to download the backup. Please try again.');
+            }
+        }
+
+
     </script>
 </body>
 

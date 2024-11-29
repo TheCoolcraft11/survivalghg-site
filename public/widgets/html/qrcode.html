@@ -1,0 +1,24 @@
+<div class="card">
+    <h1>QR Code Generator</h1>
+
+    <label for="type">Daten-Typ:</label>
+    <select id="type" onchange="updateForm()">
+        <option value="text">Text</option>
+        <option value="url">URL</option>
+        <option value="wifi">WLAN</option>
+        <option value="vcard">vCard</option>
+        <option value="geo">Geokoordinaten</option>
+        <option value="email">E-Mail</option>
+        <option value="sms">SMS</option>
+        <option value="calendar">Kalendereintrag</option>
+        <option value="file">Datei</option>
+    </select>
+    <br><br>
+
+    <div id="form">
+        <label for="textInput">Text:</label>
+        <input type="text" id="textInput" placeholder="Gib deinen Text ein">
+    </div>
+    <br>
+    <button onclick="generateQRCode()">Generate QR Code</button>
+</div>

@@ -19,7 +19,10 @@
         "id": 3,
         "title": "Note",
         "js": "./widgets/js/note.js",
-        "html": "./widgets/html/note.html"
+        "html": "./widgets/html/note.html",
+        "savable": {
+            "noteWidget-note": "noteTextBox"
+        }
     },
     {
         "id": 4,
@@ -31,7 +34,10 @@
         "id": 5,
         "title": "Password",
         "js": "./widgets/js/password.js",
-        "html": "./widgets/html/password.html"
+        "html": "./widgets/html/password.html",
+        "savable": {
+            "passwordWidget-password": "password"
+        }
     },
     {
         "id": 6,
@@ -49,24 +55,50 @@
         "id": 8,
         "title": "Memory",
         "js": "./widgets/js/memory.js",
-        "html": "./widgets/html/memory.html"
+        "html": "./widgets/html/memory.html",
+        "additionals": {
+            "js": [
+                "./widgets/js/helper.js"
+            ]
+        }
     },
     {
         "id": 9,
         "title": "Disk",
         "js": "./widgets/js/disk.js",
-        "html": "./widgets/html/disk.html"
+        "html": "./widgets/html/disk.html",
+        "additionals": {
+            "js": [
+                "./widgets/js/helper.js"
+            ]
+        }
     },
     {
         "id": 10,
         "title": "Network",
         "js": "./widgets/js/network.js",
-        "html": "./widgets/html/network.html"
+        "html": "./widgets/html/network.html",
+        "additionals": {
+            "js": [
+                "./widgets/js/helper.js"
+            ]
+        }
     },
     {
         "id": 11,
         "title": "Random",
         "js": "./widgets/js/random.js",
         "html": "./widgets/html/random.html"
+    },
+    {
+        "id": 12,
+        "title": "QR Code",
+        "js": "./widgets/js/qrcode.js",
+        "html": "./widgets/html/qrcode.html",
+        "additionals": {
+            "js": [
+                "https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"
+            ]
+        }
     }
 ]

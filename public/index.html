@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Floating Widget Selector</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="widgets/css/widgets.css">
     <style>
         body {
@@ -196,6 +196,7 @@
 </html>
 <script>
     let availableWidgets = [];
+    let widgetConfig = [];
     let placedWidgets = [];
 
     function showFloatingUI(event, fieldId) {
@@ -240,13 +241,16 @@
         try {
             const response = await fetch('/widgets.json');
             if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
-            availableWidgets = await response.json();
+            const data = await response.json();
+            availableWidgets = data;
+            widgetConfig = data;
         } catch (error) {
             console.error('Fehler beim Abrufen der Widgets:', error);
             availableWidgets = ['Error'];
         }
     }
 
+    let savableVars = new Map();
     function addWidget(widgetId, container) {
         const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
 
@@ -282,6 +286,7 @@
 
                     container.innerHTML = html;
                     container.querySelector('div').id = "widget_" + widgetId;
+                    container.querySelector('div').dataset.field = container.id;
                     container.outerHTML = container.innerHTML;
                     const widgetElement = document.getElementById("widget_" + widgetId);
 
@@ -304,30 +309,96 @@
                         script.src = widget.js;
                         script.async = true;
                         document.body.appendChild(script);
+                        if (widget.savable) {
+                            savableVars.set(widget.id, widget.savable)
+                        }
                     }
-
+                    if (widget.additionals) {
+                        Object.entries(widget.additionals).forEach(([key, resources]) => {
+                            if (Array.isArray(resources)) {
+                                resources.forEach(resource => {
+                                    if (key === 'js') {
+                                        if (!isScriptAlreadyAdded(`script-${resource}`)) {
+                                            const additionalScript = document.createElement('script');
+                                            additionalScript.src = resource;
+                                            additionalScript.async = true;
+                                            additionalScript.id = `script-${resource}`
+                                            document.body.appendChild(additionalScript);
+                                        }
+                                    }
+                                    if (key === 'css') {
+                                        if (!isCssAlreadyAdded(resource)) {
+                                            const link = document.createElement('link');
+                                            link.rel = 'stylesheet';
+                                            link.href = resource;
+                                            link.id = `link-${resource}`
+                                            document.head.appendChild(link);
+                                        }
+                                    }
+                                });
+                            } else if (typeof resources === 'string') {
+                                if (key === 'js') {
+                                    if (!isScriptAlreadyAdded(resources)) {
+                                        const additionalScript = document.createElement('script');
+                                        additionalScript.src = resources;
+                                        additionalScript.async = true;
+                                        additionalScript.id = `script-${resource}`
+                                        document.body.appendChild(additionalScript);
+                                    }
+                                }
+                                if (key === 'css') {
+                                    if (!isCssAlreadyAdded(resources)) {
+                                        const link = document.createElement('link');
+                                        link.rel = 'stylesheet';
+                                        link.href = resources;
+                                        link.id = `link-${resource}`
+                                        document.head.appendChild(link);
+                                    }
+                                }
+                            }
+                        });
+                    }
                     availableWidgets.splice(widgetIndex, 1);
 
                 })
                 .catch(error => console.error('Fehler beim Laden des Widgets:', error));
         }
     }
+
+    function isScriptAlreadyAdded(scriptId) {
+        return document.getElementById(scriptId) !== null;
+    }
+
+
+    function isCssAlreadyAdded(href) {
+        return document.getElementById(scriptId) !== null;
+    }
+
     async function exportToJSON(remove) {
         if (placedWidgets.length === 0) {
             return;
         }
 
         const widgetData = placedWidgets.map(widget => {
-            const widgetObj = availableWidgets.find(w => w.id === widget.widgetId);
+            const widgetElement = document.querySelector(`[data-field=${widget.fieldId}]`);
+            const widgetVars = [];
+            if (savableVars.has(widget.widgetId)) {
+                const savables = savableVars.get(widget.widgetId);
+                Object.entries(savables).forEach(([savable, value]) => {
+                    const storedValue = sessionStorage.getItem(savable);
+                    widgetVars.push({ savable, storedValue });
+                });
+            }
+
+
 
             return {
                 fieldId: widget.fieldId,
                 widgetId: widget.widgetId,
                 widgetTitle: widget.widgetTitle,
-                widgetDetails: widgetObj || {}
+                widgetData: widgetVars
             };
         });
-
         const token = sessionStorage.getItem('authToken');
         if (token) {
             const jsonData = remove ? null : JSON.stringify(widgetData, null, 2);
@@ -364,12 +435,12 @@
             const result = await response.json();
             if (response.ok) {
                 const jsonData = result[0]?.dashboard_layout;
-                let widgetData;
+                let widgetJSON;
 
                 if (typeof jsonData === 'string') {
-                    widgetData = JSON.parse(jsonData);
+                    widgetJSON = JSON.parse(jsonData);
                 } else {
-                    widgetData = jsonData;
+                    widgetJSON = jsonData;
                 }
 
                 await getWidgets();
@@ -380,16 +451,28 @@
                     field.classList.remove('widget');
                 });
 
-                if (widgetData) {
-                    widgetData.forEach(data => {
-                        const field = document.getElementById(data.fieldId);
+                if (widgetJSON) {
+                    widgetJSON.forEach(widgetData => {
+                        const field = document.getElementById(widgetData.fieldId);
                         if (field) {
-                            addWidget(data.widgetId, field);
+                            addWidget(widgetData.widgetId, field);
+                            setTimeout(() => {
+                                const widgetConfigEntry = widgetConfig.find(widget => widget.id === widgetData.widgetId);
+                                if (widgetConfigEntry && widgetConfigEntry.savable) {
+
+                                    widgetData.widgetData.forEach(entry => {
+                                        const savableKey = entry.savable;
+                                        if (widgetConfigEntry.savable[savableKey]) {
+                                            const savableValue = widgetConfigEntry.savable[savableKey];
+
+                                            document.getElementById(savableValue).value = entry.storedValue;
+                                        }
+                                    });
+                                }
+                            }, 50);
                         }
                     });
                 }
-            } else {
-                alert('Error loading layout: ' + result.error);
             }
         }
     }
@@ -405,5 +488,5 @@
 
     getWidgets();
 
-    window.onload = loadFromJSON();
+    document.addEventListener("DOMContentLoaded", loadFromJSON());
 </script>

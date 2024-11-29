@@ -125,7 +125,6 @@
             background-color: #006F9A;
         }
 
-
         .navbar {
             position: fixed;
             top: 0;
@@ -227,7 +226,10 @@
         <label for="role">Role:</label>
         <select id="role" name="role" required>
             <option value="admin">Admin</option>
-            <option value="editor">User</option>
+            <option value="user">User</option>
+            <option value="moderator">Moderator</option>
+            <option value="Guest">Guest</option>
+            <option value="Kirill">Kirill</option>
         </select>
 
         <label for="password">Password:</label>
@@ -253,6 +255,7 @@
 </body>
 
 </html>
+
 <script>
     const token = sessionStorage.getItem('authToken');
     function parseJwt(token) {
@@ -307,20 +310,24 @@
                             <button type="submit">Update</button>
                         </form>    
                             <form id="roleForm-${user.id}" onsubmit="submitRole(event, ${user.id})" style="display:inline;">
-                                <label for="role-${user.id}">Role:</label>
-                                <select id="role-${user.id}" name="role">
-                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-                                </select>
-                                <button type="submit">Update</button>
-                            </form>
+                            <label for="role-${user.id}">Role:</label>
+                            <select id="role-${user.id}" name="role">
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                            <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                            <option value="guest" ${user.role === 'guest' ? 'selected' : ''}>Guest</option>
+                            <option value="kirill" ${user.role === 'kirill' ? 'selected' : ''}>Kirill</option>
+                            </select>
+                            <button type="submit">Change Role</button>
+                        </form>
                         <form onsubmit="submitPassword(event, ${user.id})" style="align-items: center; display: inline;">
                             <label for="password-${user.id}">Password:</label>
                             <input type="password" id="password-${user.id}" name="password" placeholder="New password" style="width: 120px;"></input>
                             <button type="submit">Update</button>
                         </form>  
-                            <form style="align-items: center; display: inline;">
-                            <button class="btn-delete" onclick="deleteUser(${user.id})">Delete</button>
+
+                            <form id="deleteForm-${user.id}" onsubmit="deleteUser(event, ${user.id})" style="display:inline;">
+                                <button type="submit" class="btn-delete">Delete</button>
                             </form>
                         </td>
                     `;
@@ -329,131 +336,150 @@
                 });
             }
         } catch (error) {
-            console.error('Error loading users:', error);
+            console.error('Error fetching users:', error);
         }
     }
 
     async function addUser(event) {
         event.preventDefault();
 
-        const token = sessionStorage.getItem('authToken');
-        const username = document.getElementById('name').value;
+        const name = document.getElementById('name').value;
         const role = document.getElementById('role').value;
         const password = document.getElementById('password').value;
 
-        if (!username || !role || !password) {
-            alert('Please fill out all fields!');
-            return;
-        }
+        const newUser = { name, role, password };
 
         try {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
             const response = await fetch('/api/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    username: username,
-                    role: role,
-                    password: password
-                })
+                body: JSON.stringify(newUser)
             });
 
-            if (response.ok) {
-                alert('User added successfully!');
-                document.getElementById('add-user-form').reset();
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User added successfully');
                 loadUsers();
             } else {
-                alert('Error adding user');
+                alert('Error adding user: ' + result.message);
             }
         } catch (error) {
             console.error('Error adding user:', error);
-        }
-    }
-
-    async function deleteUser(id) {
-        const token = sessionStorage.getItem('authToken');
-        if (token) {
-            const response = await fetch(`/api/users/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-            });
-            if (response.ok) {
-                document.getElementById('user-table-body').innerHTML = '';
-                loadUsers();
-            }
-        }
-    }
-
-    async function submitRole(event, userId) {
-        event.preventDefault();
-        const selectedRole = document.querySelector(`#role-${userId}`).value;
-        await changeRole(userId, selectedRole);
-    }
-
-    async function changeRole(id, newRole) {
-
-        const token = sessionStorage.getItem('authToken');
-        if (token) {
-            const response = await fetch(`/api/users/${id}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ method: "role", role: newRole })
-            });
-
-            if (response.ok) {
-                document.getElementById('user-table-body').innerHTML = '';
-                loadUsers();
-            } else {
-                console.error("Failed to update role");
-            }
-        } else {
-            console.error("No auth token found");
+            alert('Error adding user.');
         }
     }
 
     async function submitName(event, userId) {
         event.preventDefault();
-        const name = document.querySelector(`#username-${userId}`).value;
-        await changeName(userId, name);
-    }
 
-    async function changeName(id, newName) {
+        const username = document.getElementById(`username-${userId}`).value;
 
-        const token = sessionStorage.getItem('authToken');
-        if (token) {
-            const response = await fetch(`/api/users/${id}`, {
+        try {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
+            const response = await fetch(`/api/users/${userId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ method: "name", name: newName })
+                body: JSON.stringify({ method: "name", username })
             });
 
-            if (response.ok) {
-                document.getElementById('user-table-body').innerHTML = '';
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User updated successfully');
                 loadUsers();
             } else {
-                console.error("Failed to update name");
+                alert('Error updating user: ' + result.message);
             }
-        } else {
-            console.error("No auth token found");
+        } catch (error) {
+            console.error('Error updating user:', error);
+            alert('Error updating user.');
         }
     }
-    async function submitPassword(event, userId) {
+
+    async function submitRole(event, userId) {
         event.preventDefault();
-        const name = document.querySelector(`#password-${userId}`).value;
-        await changePassword(userId, name);
+
+        const role = document.getElementById(`role-${userId}`).value;
+
+        try {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ method: "role", role })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User role updated successfully');
+                loadUsers();
+            } else {
+                alert('Error updating user role: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error updating user role:', error);
+            alert('Error updating user role.');
+        }
     }
 
+    async function deleteUser(event, userId) {
+        event.preventDefault();
+
+        try {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                alert("Please log in first.");
+                return;
+            }
+
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('User deleted successfully');
+                loadUsers();
+            } else {
+                alert('Error deleting user: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Error deleting user.');
+        }
+    }
     async function changePassword(id, newPassword) {
 
         const token = sessionStorage.getItem('authToken');
@@ -478,5 +504,5 @@
         }
     }
 
-    window.onload = loadUsers;
+    loadUsers();
 </script>

@@ -3,7 +3,7 @@ async function loadNetworkWidget() {
         const response = await fetch('/api/info');
         const data = await response.json();
         const networkContainer = document.getElementById('network-info-container');
-        networkContainer.innerHTML = ''; // Clear previous data
+        networkContainer.innerHTML = '';
 
         const filteredNetwork = data.network.filter(iface => iface.iface !== 'lo');
         if (filteredNetwork.length === 0) {
@@ -17,12 +17,12 @@ async function loadNetworkWidget() {
             networkElement.innerHTML = `
             <strong>Interface:</strong> ${iface.iface}<br>
             <strong>MAC:</strong> ${iface.mac || 'N/A'}<br>
-            <strong>IPv4:</strong> ${iface.ip || 'N/A'}<br>
+            <strong>IPv4:</strong> ${iface.ip4 || 'N/A'}<br>
             <strong>IPv6:</strong> ${iface.ip6 || 'N/A'}<br>
-            <strong>Data Sent:</strong> ${bytestoMB(iface.tx_bytes) || '0 MB'} MB<br>
-            <strong>Data Received:</strong> ${bytestoMB(iface.rx_bytes) || '0 MB'} MB<br>
-            <strong>Upload Speed:</strong> ${iface.upload || '0 MB'} B/s<br>
-            <strong>Download Speed:</strong> ${iface.download || '0 MB'} B/s
+            <strong>Data Sent:</strong> ${findBestUnit(iface.tx_bytes) || '0 B'}<br>
+            <strong>Data Received:</strong> ${findBestUnit(iface.rx_bytes) || '0 B'}<br>
+            <strong>Upload Speed:</strong> ${findBestUnit(iface.upload_speed) || '0 B'}/s<br>
+            <strong>Download Speed:</strong> ${findBestUnit(iface.download_speed) || '0 B'}/s
         `;
             networkContainer.appendChild(networkElement);
         });
@@ -31,9 +31,7 @@ async function loadNetworkWidget() {
     }
 }
 
-function bytestoMB(bytes) {
-    return (bytes / (1024 * 1024)).toFixed(2);
-}
 setInterval(() => {
     loadNetworkWidget();
 }, 1000);
+

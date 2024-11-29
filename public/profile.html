@@ -268,13 +268,18 @@
                 .then(data => {
                     if (data.message) {
                         document.getElementById('name').innerHTML = data.message.username;
-                        document.getElementById('role').innerHTML = data.message.role;
+                        document.getElementById('role').innerHTML = capitalizeFirstLetter(data.message.role);
                         document.getElementById('profile_picture').src = data.message.profile_picture;
                     } else {
                         console.error("No profile data found");
                     }
                 })
                 .catch(error => console.error('Error:', error));
+        }
+
+        function capitalizeFirstLetter(str) {
+            if (str.length === 0) return str;
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
         window.onload = getProfile;
     </script>

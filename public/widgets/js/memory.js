@@ -2,13 +2,13 @@ async function loadMemoryWidget() {
     try {
         const response = await fetch('/api/info');
         const data = await response.json();
-        document.getElementById('memory-total').innerText = data.memory.total || '0 MB';
-        document.getElementById('memory-used').innerText = data.memory.used || '0 MB';
+        document.getElementById('memory-total').innerText = data.memory.total || '0 B';
+        document.getElementById('memory-used').innerText = data.memory.used || '0 B';
 
-        const memoryUsage = (parseFloat(data.memory.used.replace(' MB', '')) / parseFloat(data.memory.total.replace(' MB', ''))) * 100;
+        const memoryUsage = (data.memory.used / data.memory.total) * 100;
         const memoryProgressBar = document.getElementById('memory-progress-bar');
         memoryProgressBar.style.width = `${memoryUsage.toFixed(2)}%`;
-        memoryProgressBar.innerText = `${data.memory.used} / ${data.memory.total}`;
+        memoryProgressBar.innerText = `${findBestUnit(data.memory.used)} / ${findBestUnit(data.memory.total)}`;
     } catch (error) {
         console.error('Error fetching Memory info:', error);
     }

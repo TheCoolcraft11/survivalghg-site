@@ -1,5 +1,51 @@
 <div class="card widget-note">
     <h3>Notiz Widget</h3>
-    <textarea rows="4" placeholder="Schreibe deine Notiz hier..."></textarea>
-    <button onclick="saveNote()">Speichern</button>
+    <textarea class="note" id="noteTextBox" rows="4" placeholder="Type your notes here..."></textarea>
+    <button onclick="saveNote()">Save</button>
+    <div savable name="noteHolder"></div>
 </div>
+<style>
+    .note {
+        width: 85%;
+        height: 75%;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        color: #333;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+        resize: none;
+    }
+
+    .note:focus {
+        border-color: #007bff;
+        outline: none;
+        background-color: #fff;
+        box-shadow: 0 0 28px rgba(0, 123, 255, 0.6);
+    }
+
+    .note::placeholder {
+        color: #aaa;
+        font-style: italic;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+
+    .note:hover {
+        border-color: #007bff;
+        background-color: #f1faff;
+    }
+
+    .note::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .note::-webkit-scrollbar-thumb {
+        background-color: #007bff;
+        border-radius: 10px;
+    }
+</style>

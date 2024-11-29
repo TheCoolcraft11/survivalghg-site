@@ -32,13 +32,33 @@
             font-size: 16px;
             overflow-y: auto;
             border-radius: 10px;
-            box-shadow: 0px 0px 20px rgba(3, 2, 2, 0.8);
+            box-shadow: 0 0 20px rgba(3, 2, 2, 0.8);
             opacity: 0.67;
             margin-top: 20px;
             position: relative;
             top: 10%;
             left: 7%;
+            white-space: pre-wrap;
+            display: flex;
+        }
 
+
+        ::-webkit-scrollbar {
+            width: 20px;
+        }
+
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #222;
         }
 
 
@@ -52,18 +72,19 @@
             margin-left: -40px;
         }
 
-        .btn:link,
-        .btn:visited {
+
+        .btn {
             text-transform: uppercase;
             text-decoration: none;
             padding: 15px 10px;
             display: inline-block;
             border-radius: 100px;
-            transition: all .2s;
+            transition: all 0.2s;
             position: absolute;
             width: 75px;
             height: 20px;
             text-align: center;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         .btn:hover {
@@ -76,7 +97,6 @@
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
         }
 
-
         .btn::after {
             content: "";
             display: inline-block;
@@ -87,7 +107,12 @@
             top: 0;
             left: 0;
             z-index: -1;
-            transition: all .4s;
+            transition: all 0.4s;
+        }
+
+        .btn:hover::after {
+            transform: scaleX(1.4) scaleY(1.6);
+            opacity: 0;
         }
 
         .btn-kill {
@@ -126,12 +151,6 @@
             background-color: #ff9100;
         }
 
-
-        .btn:hover::after {
-            transform: scaleX(1.4) scaleY(1.6);
-            opacity: 0;
-        }
-
         .btn-animated {
             animation: moveInBottom 5s ease-out;
             animation-fill-mode: backwards;
@@ -145,31 +164,25 @@
 
             100% {
                 opacity: 1;
-                transform: translateY(0px);
+                transform: translateY(0);
             }
-        }
-
-        .console {
-            white-space: pre-wrap;
-            overflow: auto;
-            display: flex;
         }
 
         .command-label {
             display: flex;
-            box-sizing: border-box;
             position: absolute;
             border: 1px solid transparent;
             border-radius: 12px;
-            overflow: hidden;
             background: black;
             cursor: text;
             width: 500px;
             height: 50px;
             opacity: 0.75;
             left: 7%;
+        }
 
-
+        .command-label:disabled {
+            background: #1f1f1f;
         }
 
         .command-label[type="text"] {
@@ -183,7 +196,6 @@
         .command-label:hover {
             border-color: gray;
         }
-
 
         .navbar {
             position: fixed;
@@ -216,11 +228,7 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        .nav-left a:hover {
-            color: #4db1ff;
-            border-bottom: 2px solid #4db1ff;
-        }
-
+        .nav-left a:hover,
         .nav-left .active {
             color: #4db1ff;
             border-bottom: 2px solid #4db1ff;
@@ -332,6 +340,100 @@
             height: 100%;
             border: none;
         }
+
+        #backupStatus {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            margin: 0;
+        }
+
+        .backup-header {
+            display: flex;
+            align-items: center;
+            font-size: 52px;
+            margin-bottom: 5px;
+        }
+
+        .creatingBackup {
+            font-size: 52px !important;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #sizeInfo {
+            font-size: 32px;
+            margin-left: 5px;
+        }
+
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 10px;
+        }
+
+        .progress-bar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            margin-right: 15px;
+            width: 40px;
+            height: 40px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .backup-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            border-radius: 10px 0 0 10px;
+            transition: width 0.5s ease-in-out;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .eta {
+            align-self: flex-end;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        #backupStatus p {
+            font-size: 20px;
+            margin: 5px 0;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        .size-info {
+            display: flex;
+            flex-direction: column;
+            margin: 25px 0;
+            font-size: 16px;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -354,10 +456,13 @@
     </nav>
 
     <div>
+
+
         <div class="console" id="console"></div>
         <div>
             <form onsubmit="sendCommand(event)">
-                <input type="text" name="command" placeholder="/ Enter Command" required class="command-label" />
+                <input type="text" name="command" autocomplete="off" placeholder="/ Enter Command" required
+                    class="command-label" />
             </form>
             <div class="button-container">
                 <div class="text-box">
@@ -384,7 +489,7 @@
         <ul>
             <li> <button class="bluemap-btn links-btn" onclick="toggleIframe()">Bluemap</button>
                 <div class="iframe-container" id="iframeContainer" onclick="openIframeInNewTab()">
-                    <iframe id="bluemap-iframe" src="http://server-derby.gl.at.ply.gg:16599/"></iframe>
+                    <!-- <iframe id="bluemap-iframe" src="http://server-derby.gl.at.ply.gg:16599/"></iframe> -->
                 </div>
             </li>
             <li><button class="backup-btn links-btn" onclick="backups()">Backups</button></li>
@@ -438,6 +543,7 @@
     }
 
     let socket;
+    let isBackup = false;
 
     function connectWebSocket() {
 
@@ -445,9 +551,11 @@
         socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws1');
 
         socket.onmessage = function (event) {
-            const outputDiv = document.getElementById('console');
-            outputDiv.textContent += event.data;
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+            if (!isBackup) {
+                const outputDiv = document.getElementById('console');
+                outputDiv.textContent += event.data;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
         };
 
         socket.onerror = function (error) {
@@ -533,14 +641,15 @@
 
 
     async function initialize() {
+        checkBackupStatus();
+        connectWebSocket();
         const ip = await getPublicIP();
         if (ip) {
             await sendIPToServer(ip, window.location.href);
         }
-        connectWebSocket;
+
     }
-    window.onload = connectWebSocket;
-    initialize();
+    window.onload = initialize();
 
     document.getElementById('btn-start').addEventListener('click', async (e) => {
         fetch('/api/mc/start', {
@@ -704,6 +813,89 @@
 
     const iframe = document.getElementById('bluemap-iframe');
 
+    let wasMakingBackup = false;
+    function checkBackupStatus() {
+        displayBackup();
+        setInterval(displayBackup, 5000);
+    }
+
+    function displayBackup() {
+        fetch('/api/backups/status', {
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const consoleElement = document.getElementById('console');
+                const commandInput = document.querySelector('input[name="command"]');
+                if (data.progress && data.progress !== '100%' && data.progress != 'N/A') {
+                    isBackup = true;
+                    progress = data.progress.replace('%', '');
+                    totalsize = ((formatString(data.size, true) / progress * 100).toFixed(2) + " " + formatString(data.size, false) * 0.8);
+                    commandInput.disabled = true;
+                    consoleElement.innerHTML = `
+                                       <div class="backupStatus" id="backupStatus">
+                        <!-- Invisible text line for adjusting div size -->
+                        <p id="invisible-spacer" style="visibility: hidden;">Hello there! :) This text should be long enough to make the console div large enough, so it matches the size it used to be when there were multiple console logs filling it up. But, wait a second... why are you looking at this in Dev Tools? By the way, if youre reading this, you're in the right place! Keep an eye on the progress bar. Almost there... or maybe not. Who knows?</p>
+                        <div class="backup-header">
+                            <p class="creatingBackup">Creating Backup...</p>
+                            <div class="size-info">
+                                <p id="sizeInfo">Size: ${data.size}</p>
+                                <p id="totalSizeInfo">Total: ${totalsize}</p>
+                            </div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar-container">
+                                <!-- Spinner on the left side -->
+                                <div class="spinner" id="loadingSpinner" aria-label="Loading..."></div>
+                                
+                                <progress class="backup-progress" id="backup-progress" value="${progress}" max="100" style="width: 100%; height: 30px;"></progress>
+                                <p class="progress-percentage" id="progressPercentage">${progress}%</p>
+                            </div>
+                            <p class="eta" id="eta">ETA: ${data.eta}</p>
+                        </div>
+                    
+                        <p>I dont know what could be here</p>
+                    </div>
+                    `;
+                    wasMakingBackup = true;
+                } else if (data.progress === '100%') {
+                    consoleElement.innerHTML = '<p>Backup erfolgreich abgeschlossen!</p>';
+                    wasMakingBackup = true;
+                } else {
+                    isBackup = false;
+                    if (wasMakingBackup) {
+                        consoleElement.innerHTML = '';
+                        wasMakingBackup = false;
+                        commandInput.disabled = false;
+
+                        setTimeout(connectWebSocket(), 15000);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Fehler beim Abrufen des Backup-Status:', err);
+            });
+    };
+
+
+
+    function formatString(input, numbers) {
+        if (numbers) {
+            let onlyNumbersAndSymbols = input.replace(/[a-zA-Z]/g, "");
+
+            let formattedString = onlyNumbersAndSymbols.replace(/,/g, ".");
+
+            return formattedString;
+        } else {
+            let onlyLetters = input.replace(/[1-9]/g, "");
+
+            let formattedString = onlyLetters.replace(",", "");
+
+            return formattedString;
+        }
+    }
 
 
     function openIframeInNewTab() {
@@ -720,6 +912,7 @@
     function backups() {
         window.location.href = '/backups.html'
     }
+
 </script>
 </body>
 

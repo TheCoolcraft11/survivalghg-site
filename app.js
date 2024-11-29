@@ -19,6 +19,8 @@ const uuidNamespace = uuidv5.DNS;
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const pty = require('node-pty');
+const roles = require('./roles.json').roles;
+const sharp = require('sharp');
 
 require('dotenv').config();
 
@@ -41,6 +43,42 @@ function generateUniqueId(ip, userAgentString) {
     const hash = crypto.createHash('sha256');
     hash.update(ip + userAgentString);
     return hash.digest('hex');
+}
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1] || req.query.token;
+
+    if (token == null) return res.status(401).json({ message: 'Unauthorized' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Forbidden' });
+        req.user = user;
+        next();
+    });
+}
+
+function readToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        req.user = user;
+        next();
+    });
+}
+
+
+function checkPermission(permission) {
+    return (req, res, next) => {
+        const userRole = req.user.role;
+        if (roles[userRole] && roles[userRole].permissions.includes(permission)) {
+            return next();
+        } else {
+            return res.status(403).json({ error: "Access denied: You don't have permission" });
+        }
+    };
 }
 
 
@@ -147,7 +185,7 @@ app.get('/console', (req, res) => {
 });
 
 
-app.post('/api/mc/send', authenticateToken, (req, res) => {
+app.post('/api/mc/send', authenticateToken, checkPermission('start_server'), (req, res) => {
 
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Access forbidden: Admins only' });
@@ -173,7 +211,7 @@ app.post('/api/mc/send', authenticateToken, (req, res) => {
     });
 });
 
-app.post('/api/mc/kill', authenticateToken, (req, res) => {
+app.post('/api/mc/kill', authenticateToken, checkPermission('kill_server'), (req, res) => {
 
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Access forbidden: Admins only' });
@@ -259,32 +297,6 @@ function isMinecraftServerRunning(callback) {
 const server = app.listen(3000, () => {
     console.log('HTTP server running on http://localhost:3000');
 });
-
-
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) return res.status(401).json({ message: 'Unauthorized' });
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Forbidden' });
-        req.user = user;
-        next();
-    });
-}
-
-function readToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        req.user = user;
-        next();
-    });
-}
-
 
 app.post('/api/send-register', async (req, res) => {
     const { username, password, role } = req.body;
@@ -474,41 +486,45 @@ app.post('/api/update-password', authenticateToken, async (req, res) => {
     }
 });
 
-
-
 app.get('/api/info', async (req, res) => {
     try {
         const cpu = await si.cpu();
         const cpuLoad = await si.currentLoad();
 
-
         const memory = await si.mem();
         const usedMemory = memory.total - memory.free;
-        const disks = await si.diskLayout();
+
         const diskInfo = await si.fsSize();
 
-        const disksWithUsage = disks.map((disk, index) => {
-            const used = diskInfo[index] ? diskInfo[index].used : 0;
-            return {
-                name: disk.name,
-                size: (disk.size / 1024 / 1024 / 1024).toFixed(2) + ' GB',
-                used: (used / 1024 / 1024 / 1024).toFixed(2) + ' GB'
-            };
-        });
-
+        const disksWithUsage = diskInfo
+            .filter(disk => disk.mount === '/' || disk.mount === '/mnt/backup')
+            .map(disk => ({
+                mount: disk.mount,
+                size: disk.size,
+                used: disk.used,
+                available: disk.available,
+            }));
 
         const networkStats = await si.networkStats();
+        const networkInterfaces = await si.networkInterfaces();
 
-        const networkTraffic = networkStats.map(iface => ({
-            iface: iface.iface,
-            mac: iface.mac || 'N/A',
-            ip: iface.ip4 || 'N/A',
-            ip6: iface.ip4 || 'N/A',
-            tx_bytes: iface.tx_bytes || 0,
-            rx_bytes: iface.rx_bytes || 0,
-            upload: (iface.tx_bytes / 1024 / 1024).toFixed(2) + ' MB',
-            download: (iface.rx_bytes / 1024 / 1024).toFixed(2) + ' MB',
-        }));
+
+        const networkTraffic = networkStats.map((ifaceStats) => {
+            const ifaceDetails = networkInterfaces.find(
+                (iface) => iface.iface === ifaceStats.iface
+            ) || { ip4: 'N/A', ip6: 'N/A', mac: 'N/A' };
+
+            return {
+                iface: ifaceStats.iface,
+                ip4: ifaceDetails.ip4 || 'N/A',
+                ip6: ifaceDetails.ip6 || 'N/A',
+                mac: ifaceDetails.mac || 'N/A',
+                tx_bytes: ifaceStats.tx_bytes || 0,
+                rx_bytes: ifaceStats.rx_bytes || 0,
+                upload_speed: ifaceStats.tx_sec,
+                download_speed: ifaceStats.rx_sec,
+            };
+        });
 
         const systemInfo = {
             cpu: {
@@ -518,11 +534,11 @@ app.get('/api/info', async (req, res) => {
                 usage: cpuLoad.currentLoad.toFixed(2),
             },
             memory: {
-                total: (memory.total / 1024 / 1024).toFixed(2) + ' MB',
-                used: (usedMemory / 1024 / 1024).toFixed(2) + ' MB',
+                total: memory.total,
+                used: usedMemory,
             },
             disks: disksWithUsage,
-            network: networkTraffic
+            network: networkTraffic,
         };
 
         res.json(systemInfo);
@@ -531,8 +547,6 @@ app.get('/api/info', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch system info' });
     }
 });
-
-
 const storage2 = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/screenshots');
@@ -546,7 +560,7 @@ const storage2 = multer.diskStorage({
 
 const screenshotStorage = multer({
     storage: storage2,
-    limits: { fileSize: 3500000 },
+    limits: { fileSize: 10000000 },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png/;
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -559,18 +573,32 @@ const screenshotStorage = multer({
     }
 });
 
-app.post('/api/upload-screenshot', screenshotStorage.single('file'), (req, res) => {
+app.post('/api/upload-screenshot', screenshotStorage.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
-    console.log(`Uploaded file: ${req.file.filename}`);
-    res.status(200).send('File uploaded successfully.');
-});
 
+    const uploadedFilePath = req.file.path;
+    const outputFilePath = `uploads/screenshots/min-${req.file.filename}`;
+
+    try {
+        await sharp(uploadedFilePath)
+            .jpeg({ quality: 70 })
+            .toFile(outputFilePath);
+
+        fs.unlinkSync(uploadedFilePath);
+
+        console.log(`Uploaded file minimized to: ${outputFilePath}`);
+        res.status(200).send('File uploaded and minimized successfully.');
+    } catch (error) {
+        console.error('Error processing file:', error);
+        res.status(500).send('Error processing file.');
+    }
+});
 app.set('view engine', 'ejs');
 
 app.get('/screenshots', (req, res) => {
-    const imagesDir = path.join(__dirname, 'uploads/screenshots');
+    const imagesDir = path.join(__dirname, './uploads/screenshots');
 
     fs.readdir(imagesDir, (err, files) => {
         if (err) {
@@ -585,8 +613,35 @@ app.get('/screenshots', (req, res) => {
     });
 });
 
+app.get('/api/random-screenshot.png', (req, res) => {
+    const screenshotsDir = 'uploads/screenshots'
+    fs.readdir(screenshotsDir, (err, files) => {
+        if (err) {
+            console.error('Failed to read directory:', err);
+            return res.status(500).send('Interal Server Error');
+        }
 
-app.get('/api/users', authenticateToken, (req, res) => {
+        const pngFiles = files.filter(file => file.endsWith('.png'));
+
+        if (pngFiles.length === 0) {
+            return res.status(404).send('No Screenshots found');
+        }
+
+        const randomFile = pngFiles[Math.floor(Math.random() * pngFiles.length)];
+        const filePath = path.join(screenshotsDir, randomFile);
+
+        res.sendFile(filePath, { root: path.resolve() }, err => {
+            if (err) {
+                console.error('Failed to send file: ', err);
+                res.status(500).send('Internal Server Error while sending file');
+            }
+        });
+    });
+});
+
+
+
+app.get('/api/users', authenticateToken, checkPermission('manage_users'), (req, res) => {
     db.query('SELECT id, username, role FROM users', (err, results) => {
         if (err) throw err;
         res.json(results);
@@ -625,7 +680,7 @@ app.post('/api/users', async (req, res) => {
 });
 
 
-app.delete('/api/users/:id', authenticateToken, (req, res) => {
+app.delete('/api/users/:id', authenticateToken, checkPermission('manage_users'), (req, res) => {
     const userId = req.params.id;
     db.query('DELETE FROM users WHERE id = ?', [userId], (err, results) => {
         if (err) throw err;
@@ -633,16 +688,18 @@ app.delete('/api/users/:id', authenticateToken, (req, res) => {
     });
 });
 
-app.post('/api/users/:id', authenticateToken, async (req, res) => {
+app.post('/api/users/:id', authenticateToken, checkPermission('manage_users'), async (req, res) => {
     const userId = req.params.id;
     const role = req.body.role;
     const name = req.body.name;
     const password = req.body.password;
     const method = req.body.method;
+    console.log(userId + " " + role)
     if (method) {
         if (method == "role") {
             if (userId && role) {
                 db.query('UPDATE users SET role = ? WHERE id = ?', [role, userId], (err, results) => {
+                    console.log("test " + err)
                     if (err) throw err;
                     res.json({ success: true });
                 });
@@ -739,7 +796,8 @@ app.get('/top-processes', (req, res) => {
 
 
 const BACKUP_DIR = '/mnt/backup';
-app.get('/api/backups', authenticateToken, (req, res) => {
+app.get('/api/backups', authenticateToken, checkPermission('view_backups'), (req, res) => {
+
     fs.readdir(BACKUP_DIR, (err, files) => {
         if (err) {
             return res.status(500).json({ error: 'Unable to scan directory' });
@@ -763,66 +821,68 @@ app.get('/api/backups', authenticateToken, (req, res) => {
     });
 });
 
-app.get('/api/backups/status', async (req, res) => {
-    const backupFiles = getBackupFiles();
 
-    if (!backupFiles || backupFiles.length < 2) {
-        return res.status(404).json({ message: 'Not enough backups found to compare.' });
-    }
+function extractBackupStatus(output) {
+    const sizeMatch = output.match(/(\d+,\d+\w{2})/);
+    const size = sizeMatch ? sizeMatch[1] + "B" : 'N/A';
 
-    const latestBackup = path.join(BACKUP_DIR, backupFiles[0].file);
-    const previousBackup = path.join(BACKUP_DIR, backupFiles[1].file);
-    const latestSize = getFileSize(latestBackup);
-    const previousSize = getFileSize(previousBackup);
-    const percentChange = ((latestSize - previousSize) / previousSize) * 100;
-    let estimatedCompletion = 'N/A';
+    const progressEtaMatch = output.match(/(\d+)%\s+ETA\s+([^\s]+)/);
+    const progress = progressEtaMatch ? `${progressEtaMatch[1]}%` : 'N/A';
+    const eta = progressEtaMatch ? progressEtaMatch[2] : 'N/A';
+
+    return { size, progress, eta };
+}
 
 
+app.get('/api/backups/status', (req, res) => {
+    //res.json({ 'size': '1GiB', 'progress': '12%', 'eta': '10:01:12', 'status': 'creating', 'type': 'test' });
 
-    res.json({
-        latestBackupFile: backupFiles[0].file,
-        previousBackupFile: backupFiles[1].file,
-        latestBackupSize: getFileSize(latestBackup),
-        previousBackupSize: getFileSize(previousBackup),
-        percentChange: getFileSize(latestBackup) / getFileSize(previousBackup),
+    const sessionName = 'SurvivalGHG';
+    const { exec } = require('child_process');
+    exec(`screen -S ${sessionName} -X hardcopy /tmp/screen.log && cat /tmp/screen.log`, (err, stdout, stderr) => {
+        if (err) {
+            console.error(`Error when retrieving screen session: ${err.message}`);
+            return res.status(500).json({ error: 'Screen session could not be read.' });
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return res.status(500).json({ error: 'An error occured' });
+        }
+
+        const backupStatus = extractBackupStatus(stdout);
+
+        res.json(backupStatus);
     });
 });
 
 
 
-const getFileSize = (filePath) => {
-    const stats = fs.statSync(filePath);
-    return stats.size;
-};
-
-
-const getBackupFiles = () => {
-    const files = fs.readdirSync(BACKUP_DIR)
-        .filter(file => file.endsWith('.tar.gz'))
-        .map(file => {
-            return {
-                file,
-                mtime: fs.statSync(path.join(BACKUP_DIR, file)).mtime
-            };
-        });
-    files.sort((a, b) => b.mtime - a.mtime);
-
-    return files.length >= 2 ? files : null;
-};
-
-
-app.get('/download/:filename', authenticateToken, (req, res) => {
+app.get('/download/:filename', authenticateToken, checkPermission('download_backups'), (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(BACKUP_DIR, filename);
 
     if (fs.existsSync(filePath)) {
-        res.download(filePath);
+        const stat = fs.statSync(filePath);
+
+        res.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': stat.size,
+            'Content-Disposition': `attachment; filename="${filename}"`,
+        });
+
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+
+        fileStream.on('error', (err) => {
+            console.error('Error streaming file:', err.message);
+            res.status(500).json({ error: 'Error streaming file' });
+        });
     } else {
         res.status(404).json({ error: 'File not found' });
     }
 });
 
-app.delete('/api/backups/:filename', authenticateToken, (req, res) => {
+app.delete('/api/backups/:filename', authenticateToken, checkPermission('delete_backup'), (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(BACKUP_DIR, filename);
 

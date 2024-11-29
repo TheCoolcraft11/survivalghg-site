@@ -9,10 +9,10 @@ async function loadDisksWidget() {
             const diskElement = document.createElement('div');
             diskElement.classList.add('info-text');
             diskElement.innerHTML = `
-            ${disk.name}: ${disk.size}
+            <strong>${disk.mount}</strong>: ${disk.size}
             <div class="progress">
-                <div class="progress-bar" style="width: ${(parseFloat(disk.used.replace(' GB', '')) / parseFloat(disk.size.replace(' GB', '')) * 100).toFixed(2)}%;">
-                    ${disk.used} / ${disk.size}
+                <div class="progress-bar" style="width: ${(disk.used / disk.size * 100).toFixed(2)}%;">
+                    ${findBestUnit(disk.used)} / ${findBestUnit(disk.size)}
                 </div>
             </div>
         `;

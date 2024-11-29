@@ -20,6 +20,7 @@
     "node-pty": "^1.0.0",
     "os": "^0.1.2",
     "path": "^0.12.7",
+    "sharp": "^0.33.5",
     "socket.io": "^4.8.1",
     "systeminformation": "^5.23.5",
     "useragent": "^2.3.0",
