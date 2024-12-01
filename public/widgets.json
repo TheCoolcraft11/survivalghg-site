@@ -100,5 +100,11 @@
                 "https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"
             ]
         }
+    },
+    {
+        "id": 13,
+        "title": "Console",
+        "js": "./widgets/js/console.js",
+        "html": "./widgets/html/console.html"
     }
 ]

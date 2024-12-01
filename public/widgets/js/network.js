@@ -18,7 +18,7 @@ async function loadNetworkWidget() {
             <strong>Interface:</strong> ${iface.iface}<br>
             <strong>MAC:</strong> ${iface.mac || 'N/A'}<br>
             <strong>IPv4:</strong> ${iface.ip4 || 'N/A'}<br>
-            <strong>IPv6:</strong> ${iface.ip6 || 'N/A'}<br>
+            <strong>IPv6:</strong> <span class="ip6info">${iface.ip6 || 'N/A'}</span><br>
             <strong>Data Sent:</strong> ${findBestUnit(iface.tx_bytes) || '0 B'}<br>
             <strong>Data Received:</strong> ${findBestUnit(iface.rx_bytes) || '0 B'}<br>
             <strong>Upload Speed:</strong> ${findBestUnit(iface.upload_speed) || '0 B'}/s<br>

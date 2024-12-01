@@ -25,6 +25,8 @@
         .console {
             width: 75%;
             height: 75vh;
+            min-width: 150vh;
+            min-height: 75vh;
             background-color: black;
             color: white;
             padding: 20px;
@@ -35,13 +37,65 @@
             box-shadow: 0 0 20px rgba(3, 2, 2, 0.8);
             opacity: 0.67;
             margin-top: 20px;
-            position: relative;
-            top: 10%;
+            position: absolute;
+            top: 9%;
             left: 7%;
             white-space: pre-wrap;
-            display: flex;
+            display: block;
         }
 
+        .console .message-div {
+            display: block;
+            white-space: pre-wrap;
+        }
+
+        .console div[data-type="joinorleft"] {
+            color: lime;
+        }
+
+        .console div[data-type="chatmsg"] {
+            color: cyan;
+        }
+
+        .console div[data-type="cmdexec"] {
+            color: orange;
+        }
+
+        .console div[data-type="deathmsg"] {
+            color: red;
+        }
+
+        .console div[data-type="warn"] {
+            color: yellow;
+            font-weight: bold;
+        }
+
+        .console div[data-type="error"] {
+            color: darkred;
+            font-weight: bold;
+        }
+
+        .console div[data-type="info"] {
+            color: white;
+        }
+
+        .console div[data-type="other"] {
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from {
+                background-color: yellow;
+            }
+
+            to {
+                background-color: black;
+            }
+        }
+
+        .new-message {
+            animation: fadeIn 1s ease-out;
+        }
 
         ::-webkit-scrollbar {
             width: 20px;
@@ -69,7 +123,9 @@
             justify-content: flex-end;
             padding-right: 10%;
             gap: 100px;
-            margin-left: -40px;
+            margin-left: -1000px;
+            position: absolute;
+            bottom: 8%;
         }
 
 
@@ -179,6 +235,7 @@
             height: 50px;
             opacity: 0.75;
             left: 7%;
+            bottom: 3%;
         }
 
         .command-label:disabled {
@@ -272,9 +329,10 @@
             color: white;
             align-self: flex-end;
             width: fit-content;
-            position: relative;
+            position: absolute;
             right: 0;
             bottom: 40%;
+            flex-wrap: wrap;
         }
 
         .server-links h3 {
@@ -434,6 +492,131 @@
             font-size: 16px;
             text-align: left;
         }
+
+        .filter {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .filter-content {
+            display: none;
+            position: absolute;
+            background-color: black;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(3, 2, 2, 0.8);
+            opacity: 0.67;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            right: 20px;
+        }
+
+        .filter-content label {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: block;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            color: #fff;
+
+        }
+
+        .filter-content label:hover {
+            background-color: #ddd;
+        }
+
+        .filter-show {
+            display: block;
+        }
+
+        .filter-checkbox {
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .console {
+                width: 40vh;
+                height: 20vh;
+                min-width: 40vh;
+                min-height: 50vh;
+                background-color: black;
+                color: white;
+                padding: 20px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                overflow-y: auto;
+                border-radius: 10px;
+                box-shadow: 0 0 20px rgba(3, 2, 2, 0.8);
+                opacity: 0.67;
+                margin-top: 20px;
+                position: absolute;
+                top: 9%;
+                left: 7%;
+                white-space: pre-wrap;
+                display: block;
+            }
+
+
+            .button-container {
+                gap: 100px;
+                margin-left: 0;
+                padding-right: 0;
+                position: absolute;
+                bottom: 0;
+                margin-left: -50%;
+            }
+
+            .command-label {
+                width: 90%;
+                left: 5%;
+                bottom: 20%;
+            }
+
+            .server-links {
+                flex-direction: column;
+                gap: 10px;
+                display: flex;
+                justify-content: center;
+                bottom: 7%;
+                padding: 10px;
+            }
+
+            .server-links h3 {
+                margin-bottom: 40px;
+            }
+
+            .filter-content {
+                bottom: -160%;
+                right: 120%;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: #333;
+                border-radius: 10px;
+                height: 30px;
+            }
+
+            ::-webkit-scrollbar {
+                width: 20px;
+            }
+        }
     </style>
 </head>
 
@@ -481,44 +664,61 @@
                     <a href="#" onclick="return false;" type="button" id="btn-kill"
                         class="btn btn-animate btn-kill">Kill</a>
                 </div>
+
             </div>
         </div>
     </div>
-    <div class="server-links" id="serverLinks">
-        <h3>Server Links</h3>
+    <h3 class="server-links" onclick="hideActions()" style="display: block;" id="serverText">Server Actions</h3>
+    <div class="server-links" style="display: none;" id="serverLinks">
+        <h3 onclick="hideActions()">Server Actions</h3>
         <ul>
-            <li> <button class="bluemap-btn links-btn" onclick="toggleIframe()">Bluemap</button>
-                <div class="iframe-container" id="iframeContainer" onclick="openIframeInNewTab()">
-                    <!-- <iframe id="bluemap-iframe" src="http://server-derby.gl.at.ply.gg:16599/"></iframe> -->
-                </div>
-            </li>
             <li><button class="backup-btn links-btn" onclick="backups()">Backups</button></li>
+            <div class="filter-container">
+                Messages</label>
+                <div style="position: relative;">
+                    <button class="filter-button" id="filter-toggle-button">Filters</button>
+                    <div class="filter-content" id="filter-dropdown">
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-joinorleft" class="filter-checkbox" value="joinorleft" checked>Join Or
+                            Left</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-cmdexec" class="filter-checkbox" value="cmdexec" checked> Command
+                            Executions</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-deathmsg" class="filter-checkbox" value="deathmsg" checked> Death
+                            Messages</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-warn" class="filter-checkbox" value="warn" checked> Warnings</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-error" class="filter-checkbox" value="error" checked><br> Errors</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-info" class="filter-checkbox" value="info" checked> Information</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-other" class="filter-checkbox" value="other" checked> <br>Other</label>
+                    </div>
+                </div>
+            </div>
         </ul>
     </div>
     </div>
+
 
 </body>
 
 </html>
 <script>
-    function toggleIframe() {
-        const iframeContainer = document.getElementById("iframeContainer");
-        iframeContainer.classList.toggle("show");
-    }
-    function changeUrlPort(url, newPort) {
-        try {
-            const parsedUrl = new URL(url);
-            parsedUrl.port = newPort;
-            parsedUrl.pathname = '/';
-            parsedUrl.protocol = 'ws:';
-            return parsedUrl.toString();
-        } catch (error) {
-            console.error("Invalid URL provided:", error);
-            return null;
+
+    const filterButton = document.getElementById('filter-toggle-button');
+    const filterDropdown = document.getElementById('filter-dropdown');
+    filterButton.addEventListener('click', () => {
+        filterDropdown.classList.toggle('filter-show');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+            filterDropdown.classList.remove('filter-show');
         }
-    }
-
-
+    });
 
     const token = sessionStorage.getItem('authToken');
     function parseJwt(token) {
@@ -535,6 +735,19 @@
         }
     }
 
+    function hideActions() {
+        const actionsDiv = document.getElementById('serverLinks');
+        const actionsText = document.getElementById('serverText');
+        if (actionsDiv.style.display != 'none') {
+            actionsDiv.style.display = 'none'
+            actionsText.style.display = 'block'
+        } else {
+            actionsDiv.style.display = 'block'
+            actionsText.style.display = 'none'
+        }
+
+    }
+
     if (token) {
         const userData = parseJwt(token);
         if (userData && userData.role === 'admin') {
@@ -542,18 +755,77 @@
         }
     }
 
+    const regexList = {
+        chatRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*\[.*\].*<[A-Za-z0-9]+>\s+[A-Za-z0-9]+/i,
+        warnRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(WARN|WARNING)/i,
+        errorRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(ERR|ERROR)/i,
+        infoRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(INFO)/i,
+        joinRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[A-Za-z0-9]+(\s\[[^\]]*\])? joined the game/i,
+        leftRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[A-Za-z0-9]+(\s\[[^\]]*\])? left the game/i,
+        commandRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: [A-Za-z0-9]+ issued server command: \/[^ ]+/i,
+
+    };
+
     let socket;
     let isBackup = false;
+    let receivedMessages = [];
+    let filterTypes = ['all', 'joinorleft', 'cmdexec', 'deathmsg', 'warn', 'error', 'info', 'other'];
 
     function connectWebSocket() {
-
-        //socket = new WebSocket(changeUrlPort(window.location.href, 8080));
         socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws1');
 
         socket.onmessage = function (event) {
             if (!isBackup) {
                 const outputDiv = document.getElementById('console');
-                outputDiv.textContent += event.data;
+                const lines = event.data.split('\n');
+                lines.forEach(line => {
+                    line = line.trim();
+
+                    if (line.length === 0) return;
+
+                    if (!receivedMessages.includes(line)) {
+                        const lineElement = document.createElement('div');
+                        if (regexList.joinRegex.test(line) || regexList.leftRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'joinorleft');
+                            //lineElement.style.color = 'lime'
+                        } else if (regexList.chatRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'chatmsg');
+                            //lineElement.style.color = 'cyan';
+                        } else if (regexList.commandRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'cmdexec');
+                            //lineElement.style.color = 'orange'
+                        } else if (testDeathMessage(line)) {
+                            lineElement.setAttribute('data-type', 'deathmsg');
+                            //lineElement.style.color = 'red'
+                        } else if (regexList.warnRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'warn');
+                            //lineElement.style.color = 'yellow';
+                        } else if (regexList.errorRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'error');
+                            //lineElement.style.color = 'darkred';
+                        } else if (regexList.infoRegex.test(line)) {
+                            lineElement.setAttribute('data-type', 'info');
+                            //lineElement.style.color = 'white';
+                        } else {
+                            lineElement.setAttribute('data-type', 'other');
+                            //lineElement.style.color = 'white';
+                        }
+
+                        lineElement.textContent = line;
+                        lineElement.classList.add("message-div");
+                        lineElement.id = 'message'
+                        lineElement.classList.add('new-message');
+                        outputDiv.appendChild(lineElement);
+                        //filterMessages();
+
+                        setTimeout(() => {
+                            lineElement.classList.remove('new-message');
+                        }, 1000);
+
+                        receivedMessages.push(line);
+                    }
+                });
+
                 outputDiv.scrollTop = outputDiv.scrollHeight;
             }
         };
@@ -566,6 +838,168 @@
             console.log('WebSocket connection closed. Reconnecting in 1 second...');
             setTimeout(connectWebSocket, 1000);
         };
+    }
+    function testDeathMessage(message) {
+        const deathMessageRegex = {
+            // **Cactus**
+            cactus: /was pricked to death/,
+            cactusEscape: /walked into a cactus while trying to escape [A-Za-z0-9_]+/,
+
+            // **Drowning**
+            drown: /drowned/,
+            drownEscape: /drowned while trying to escape [A-Za-z0-9_]+/,
+
+            // **Drying Out**
+            dryOut: /died from dehydration/,
+            dryOutEscape: /died from dehydration while trying to escape [A-Za-z0-9_]+/,
+
+            // **Elytra (Fly into Wall)**
+            elytra: /experienced kinetic energy/,
+            elytraEscape: /experienced kinetic energy while trying to escape [A-Za-z0-9_]+/,
+
+            // **Explosions**
+            explosion: /blew up/,
+            explosionPlayer: /was blown up by [A-Za-z0-9_]+/,
+            explosionPlayerItem: /was blown up by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+
+            // **Falling**
+            fall: /hit the ground too hard/,
+            fallEscape: /hit the ground too hard while trying to escape [A-Za-z0-9_]+/,
+            fallHigh: /fell from a high place/,
+            fallLadder: /fell off a ladder/,
+            fallVines: /fell off some vines/,
+            fallWeepingVines: /fell off some weeping vines/,
+            fallTwistingVines: /fell off some twisting vines/,
+            fallScaffolding: /fell off scaffolding/,
+            fallClimbing: /fell while climbing/,
+            fallDoomed: /was doomed to fall/,
+            fallDoomedPlayer: /was doomed to fall by [A-Za-z0-9_]+/,
+            fallDoomedPlayerItem: /was doomed to fall by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+            fallStalagmite: /was impaled on a stalagmite/,
+            fallStalagmiteEscape: /was impaled on a stalagmite while fighting [A-Za-z0-9_]+/,
+
+            // **Falling Blocks**
+            fallingAnvil: /was squashed by a falling anvil/,
+            fallingBlock: /was squashed by a falling block/,
+            fallingStalactite: /was skewered by a falling stalactite/,
+
+            // **Fire**
+            fire: /went up in flames/,
+            fireEscape: /walked into fire while fighting [A-Za-z0-9_]+/,
+            fireBurn: /burned to death/,
+            fireBurnEscape: /was burned to a crisp while fighting [A-Za-z0-9_]+/,
+
+            // **Firework Rockets**
+            firework: /went off with a bang/,
+            fireworkPlayerItem: /went off with a bang due to a firework fired from [A-Za-z0-9_]+ by [A-Za-z0-9_]+/,
+
+            // **Lava**
+            lava: /tried to swim in lava/,
+            lavaEscape: /tried to swim in lava to escape [A-Za-z0-9_]+/,
+
+            // **Lightning**
+            lightning: /was struck by lightning/,
+            lightningEscape: /was struck by lightning while fighting [A-Za-z0-9_]+/,
+
+            // **Magma Block**
+            magma: /discovered the floor was lava/,
+            magmaEscape: /walked into the danger zone due to [A-Za-z0-9_]+/,
+
+            // **Magic**
+            magic: /was killed by magic/,
+            magicEscape: /was killed by magic while trying to escape [A-Za-z0-9_]+/,
+            magicPlayer: /was killed by [A-Za-z0-9_]+ using magic/,
+            magicPlayerItem: /was killed by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+
+            // **Players and Mobs**
+            playerKill: /was slain by [A-Za-z0-9_]+/,
+            playerKillItem: /was slain by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+            beeKill: /was stung to death/,
+            beeKillPlayerItem: /was stung to death by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+            wardenKill: /was obliterated by a sonically-charged shriek/,
+            wardenKillEscape: /was obliterated by a sonically-charged shriek while trying to escape [A-Za-z0-9_]+ wielding [A-Za-z0-9_]+/,
+            maceKill: /was smashed by [A-Za-z0-9_]+/,
+            maceKillItem: /was smashed by [A-Za-z0-9_]+ with [A-Za-z0-9_]+/,
+
+            // **Projectiles**
+            arrowKill: /was shot by [A-Za-z0-9_]+/,
+            arrowKillItem: /was shot by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+            fireballKill: /was fireballed by [A-Za-z0-9_]+/,
+            fireballKillItem: /was fireballed by [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+            tridentKill: /was impaled by [A-Za-z0-9_]+/,
+            tridentKillItem: /was impaled by [A-Za-z0-9_]+ with [A-Za-z0-9_]+/,
+            witherSkullKill: /was shot by a skull from [A-Za-z0-9_]+/,
+            witherSkullKillItem: /was shot by a skull from [A-Za-z0-9_]+ using [A-Za-z0-9_]+/,
+
+            // **Starving**
+            starve: /starved to death/,
+            starveEscape: /starved to death while fighting [A-Za-z0-9_]+/,
+
+            // **Suffocation**
+            suffocate: /suffocated in a wall/,
+            suffocateEscape: /suffocated in a wall while fighting [A-Za-z0-9_]+/,
+            cramming: /was squished too much/,
+            crammingPlayer: /was squashed by [A-Za-z0-9_]+/,
+            border: /left the confines of this world/,
+            borderEscape: /left the confines of this world while fighting [A-Za-z0-9_]+/,
+
+            // **Sweet Berry Bushes**
+            sweetBerryBush: /was poked to death by a sweet berry bush/,
+            sweetBerryBushEscape: /was poked to death by a sweet berry bush while trying to escape [A-Za-z0-9_]+/,
+
+            // **Thorns Enchantment**
+            thorns: /was killed while trying to hurt [A-Za-z0-9_]+/,
+            thornsItem: /was killed by [A-Za-z0-9_]+ while trying to hurt [A-Za-z0-9_]+/,
+
+            // **Trident**
+            tridentKill: /was impaled by [A-Za-z0-9_]+/,
+            tridentKillItem: /was impaled by [A-Za-z0-9_]+ with [A-Za-z0-9_]+/,
+
+            // **Void**
+            void: /fell out of the world/,
+            voidEscape: /didn't want to live in the same world as [A-Za-z0-9_]+/,
+
+            // **Wither Effect**
+            wither: /withered away/,
+            witherEscape: /withered away while fighting [A-Za-z0-9_]+/,
+
+            // **Generic Death**
+            genericDeath: /died/,
+            genericDeathPlayer: /died because of [A-Za-z0-9_]+/,
+            killCommand: /was killed/,
+            killCommandEscape: /was killed while fighting [A-Za-z0-9_]+/,
+        };
+        for (const [deathType, regex] of Object.entries(deathMessageRegex)) {
+            if (regex.test(message)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function addFilter(value, isChecked) {
+        if (isChecked) {
+            if (!filterTypes.includes(value)) {
+                filterTypes.push(value);
+                console.log(`Filter hinzugefügt: ${value}`);
+            }
+        } else {
+            filterTypes = filterTypes.filter(filter => filter !== value);
+        }
+        filterMessages()
+    }
+
+    function filterMessages(types = filterTypes) {
+        const messages = document.querySelectorAll('#console #message');
+
+        messages.forEach((message) => {
+            console.log(message.getAttribute('data-type'))
+            if (types.includes(message.getAttribute('data-type'))) {
+                message.style.display = 'block';
+            } else {
+                message.style.display = 'none';
+            }
+        });
     }
 
     function sendCommand(event) {
@@ -639,17 +1073,22 @@
         }
     }
 
-
     async function initialize() {
-        checkBackupStatus();
-        connectWebSocket();
-        const ip = await getPublicIP();
-        if (ip) {
-            await sendIPToServer(ip, window.location.href);
-        }
+        try {
+            checkBackupStatus();
+            connectWebSocket();
 
+            const ip = await getPublicIP();
+            if (ip) {
+                await sendIPToServer(ip, window.location.href);
+            }
+        } catch (error) {
+            console.error('Fehler beim Initialisieren:', error);
+        }
     }
-    window.onload = initialize();
+
+    window.onload = initialize;
+
 
     document.getElementById('btn-start').addEventListener('click', async (e) => {
         fetch('/api/mc/start', {
@@ -816,7 +1255,7 @@
     let wasMakingBackup = false;
     function checkBackupStatus() {
         displayBackup();
-        setInterval(displayBackup, 5000);
+        setInterval(displayBackup, 151100);
     }
 
     function displayBackup() {
@@ -832,12 +1271,10 @@
                 if (data.progress && data.progress !== '100%' && data.progress != 'N/A') {
                     isBackup = true;
                     progress = data.progress.replace('%', '');
-                    totalsize = ((formatString(data.size, true) / progress * 100).toFixed(2) + " " + formatString(data.size, false) * 0.8);
+                    totalsize = ((formatString(data.size, true) / progress * 100 * 0.75).toFixed(2) + " " + formatString(data.size, false));
                     commandInput.disabled = true;
                     consoleElement.innerHTML = `
-                                       <div class="backupStatus" id="backupStatus">
-                        <!-- Invisible text line for adjusting div size -->
-                        <p id="invisible-spacer" style="visibility: hidden;">Hello there! :) This text should be long enough to make the console div large enough, so it matches the size it used to be when there were multiple console logs filling it up. But, wait a second... why are you looking at this in Dev Tools? By the way, if youre reading this, you're in the right place! Keep an eye on the progress bar. Almost there... or maybe not. Who knows?</p>
+                    <div class="backupStatus" id="backupStatus">
                         <div class="backup-header">
                             <p class="creatingBackup">Creating Backup...</p>
                             <div class="size-info">

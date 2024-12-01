@@ -1,0 +1,105 @@
+<div class="card widget-console">
+    <h2 class="console-h2">Console</h2>
+    <div id="console" class="console"></div>
+</div>
+<style>
+    .console-h2 {
+        margin: 0;
+    }
+
+    .console {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        overflow-y: auto;
+        position: relative;
+        white-space: pre-wrap;
+        display: flex;
+    }
+
+    ::-webkit-scrollbar {
+        width: 20px;
+    }
+
+    ::-webkit-scrollbar-track {
+        box-shadow: inset 0 0 5px grey;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #222;
+    }
+
+    #backupStatus {
+        font-family: Arial, sans-serif;
+        margin: 0;
+    }
+
+    .backup-header {
+        display: flex;
+        align-items: center;
+        font-size: 22px;
+
+    }
+
+    .creatingBackup {
+        font-size: 22px !important;
+        font-weight: bold;
+
+    }
+
+    #sizeInfo {
+        font-size: 22px;
+    }
+
+    .progress-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .progress-bar-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+
+    .backup-progress {
+        height: 100%;
+        background: linear-gradient(90deg, #6a11cb, #2575fc);
+        border-radius: 10px 0 0 10px;
+        transition: width 0.5s ease-in-out;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .eta {
+        align-self: flex-end;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    #backupStatus p {
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .progress-bar-container {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+    }
+
+    .size-info {
+        display: flex;
+        flex-direction: column;
+        font-size: 16px;
+        text-align: left;
+    }
+</style>
