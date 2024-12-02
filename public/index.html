@@ -22,9 +22,16 @@
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(5, 250px);
-            grid-template-rows: repeat(2, 250px);
+            grid-template-columns: repeat(7, 325px);
+            grid-template-rows: repeat(2, 325px);
             gap: 120px;
+            overflow: auto;
+            margin-left: 10vh;
+            margin-right: 10vh;
+        }
+
+        .grid-container::-webkit-scrollbar {
+            display: none;
         }
 
         .wrapper {
@@ -45,7 +52,9 @@
             font-size: 1.2em;
             color: #333;
             cursor: pointer;
-            top: 50%
+            top: 50%;
+            scroll-snap-align: center;
+            scroll-snap-stop: normal;
         }
 
         .floating-ui {
@@ -148,6 +157,29 @@
             bottom: 0%;
             position: absolute;
         }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                gap: 0px;
+                row-gap: 20px;
+                overflow-y: auto;
+                position: relative;
+                max-height: 100vh;
+                padding-top: 10vh;
+                padding-bottom: 10vh;
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+
+        .empty-widget {
+            visibility: hidden;
+            width: 250px;
+            height: 250px;
+        }
     </style>
 </head>
 
@@ -170,7 +202,7 @@
     </nav>
 
     <div class="wrapper">
-        <div class="grid-container">
+        <div class="grid-container" id="grid-container">
             <div class="field" id="field1" onclick="showFloatingUI(event, 'field1')">Field 1</div>
             <div class="field" id="field2" onclick="showFloatingUI(event, 'field2')">Field 2</div>
             <div class="field" id="field3" onclick="showFloatingUI(event, 'field3')">Field 3</div>
@@ -181,11 +213,16 @@
             <div class="field" id="field8" onclick="showFloatingUI(event, 'field8')">Field 8</div>
             <div class="field" id="field9" onclick="showFloatingUI(event, 'field9')">Field 9</div>
             <div class="field" id="field10" onclick="showFloatingUI(event, 'field10')">Field 10</div>
+            <div class="field" id="field11" onclick="showFloatingUI(event, 'field11')">Field 11</div>
+            <div class="field" id="field12" onclick="showFloatingUI(event, 'field12')">Field 12</div>
+            <div class="field" id="field13" onclick="showFloatingUI(event, 'field13')">Field 13</div>
+            <div class="field" id="field14" onclick="showFloatingUI(event, 'field14')">Field 14</div>
         </div>
     </div>
 
     <div id="floatingUI" class="floating-ui">
         <p>Select a widget:</p>
+        <button onclick="selectWidget(0)">Empty Widget</button>
     </div>
 
     <div class="button-container" style="display: none;">
@@ -206,7 +243,8 @@
         const field = document.getElementById(fieldId);
 
         const fieldRect = field.getBoundingClientRect();
-        floatingUI.innerHTML = '  <p>Select a widget:</p>';
+        floatingUI.innerHTML = `  <p>Select a widget:</p>
+        <button onclick="addEmptyWidget(${fieldId})">Empty Widget</button>`;
 
         floatingUI.style.left = `${fieldRect.right + 10}px`;
         floatingUI.style.top = `${fieldRect.top}px`;
@@ -214,7 +252,7 @@
         floatingUI.setAttribute('data-field-id', fieldId);
 
         floatingUI.style.display = 'block';
-        availableWidgets.forEach(widget => {
+        availableWidgets.filter(widget => !widget.title.includes('Empty')).forEach(widget => {
             const widgetItem = document.createElement('div');
             widgetItem.classList.add('widget-item');
             widgetItem.innerHTML = `<button onclick="selectWidget(${widget.id})">${widget.title}</button>`
@@ -237,7 +275,44 @@
         floatingUI.style.display = 'none';
     }
 
+    function addEmptyWidget(container) {
+        const emptyWidgetId = 'empty-widget-' + Date.now();
+        const emptyWidget = {
+            id: emptyWidgetId,
+            title: '',
+            html: './widgets/html/empty.html',
+            js: './widgets/js/empty.js'
+        };
 
+        placedWidgets.push({
+            fieldId: container.id,
+            widgetId: emptyWidget.id,
+            widgetTitle: emptyWidget.title
+        });
+
+        container.classList.add('empty-widget');
+        container.setAttribute('data-widget-id', emptyWidget.id);
+
+        if (emptyWidget.color) {
+            container.style.setProperty('--widget-bg-color', emptyWidget.color);
+        }
+        if (emptyWidget.accentColor) {
+            container.style.setProperty('--widget-accent-color', emptyWidget.accentColor);
+        }
+        if (emptyWidget.progressColor) {
+            container.style.setProperty('--widget-progress-bg-color', emptyWidget.progressColor);
+        }
+        if (emptyWidget.progressBarColor) {
+            container.style.setProperty('--widget-progress-bar-color', emptyWidget.progressBarColor);
+        }
+
+        container.innerHTML = '<div id="widget_' + emptyWidget.id + '" class="empty-widget">Leeres Widget</div>';
+
+        gridContainer = document.getElementById('grid-container');
+        gridContainer.style.display = 'none';
+        gridContainer.offsetHeight;
+        gridContainer.style.display = 'grid';
+    }
 
     async function getWidgets() {
         try {
@@ -254,6 +329,8 @@
 
     let savableVars = new Map();
     function addWidget(widgetId, container) {
+
+
         const widgetIndex = availableWidgets.findIndex(widget => widget.id === widgetId);
 
         if (widgetIndex > -1) {
@@ -365,6 +442,10 @@
                 })
                 .catch(error => console.error('Fehler beim Laden des Widgets:', error));
         }
+        gridContainer = document.getElementById('grid-container');
+        gridContainer.style.display = 'none';
+        gridContainer.offsetHeight;
+        gridContainer.style.display = 'grid';
     }
 
     function isScriptAlreadyAdded(scriptId) {
@@ -437,6 +518,7 @@
             const result = await response.json();
             if (response.ok) {
                 const jsonData = result[0]?.dashboard_layout;
+                console.log(jsonData)
                 let widgetJSON;
 
                 if (typeof jsonData === 'string') {
@@ -457,21 +539,28 @@
                     widgetJSON.forEach(widgetData => {
                         const field = document.getElementById(widgetData.fieldId);
                         if (field) {
-                            addWidget(widgetData.widgetId, field);
-                            setTimeout(() => {
-                                const widgetConfigEntry = widgetConfig.find(widget => widget.id === widgetData.widgetId);
-                                if (widgetConfigEntry && widgetConfigEntry.savable) {
-
-                                    widgetData.widgetData.forEach(entry => {
-                                        const savableKey = entry.savable;
-                                        if (widgetConfigEntry.savable[savableKey]) {
-                                            const savableValue = widgetConfigEntry.savable[savableKey];
-
-                                            document.getElementById(savableValue).value = entry.storedValue;
-                                        }
-                                    });
+                            console.log(widgetData.widgetId, typeof widgetData.widgetId)
+                            if (widgetData.widgetId && typeof widgetData.widgetId === "string") {
+                                if (widgetData.widgetId.includes('empty-widget')) {
+                                    addEmptyWidget(field);
                                 }
-                            }, 50);
+                            } else {
+                                addWidget(widgetData.widgetId, field);
+                                setTimeout(() => {
+                                    const widgetConfigEntry = widgetConfig.find(widget => widget.id === widgetData.widgetId);
+                                    if (widgetConfigEntry && widgetConfigEntry.savable) {
+
+                                        widgetData.widgetData.forEach(entry => {
+                                            const savableKey = entry.savable;
+                                            if (widgetConfigEntry.savable[savableKey]) {
+                                                const savableValue = widgetConfigEntry.savable[savableKey];
+
+                                                document.getElementById(savableValue).value = entry.storedValue;
+                                            }
+                                        });
+                                    }
+                                }, 50);
+                            }
                         }
                     });
                 }
@@ -491,4 +580,44 @@
     getWidgets();
 
     document.addEventListener("DOMContentLoaded", loadFromJSON());
+
+    const container = document.getElementById('grid-container');
+
+    let scrollAmount = 0;
+    let isScrolling = false;
+
+    container.addEventListener('wheel', (e) => {
+        const target = e.target;
+
+        if (target !== container && (target.scrollHeight > target.clientHeight || target.scrollWidth > target.clientWidth)) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const delta = e.deltaY > 0 ? 100 : -100;
+        scrollAmount += delta;
+
+        if (!isScrolling) {
+            isScrolling = true;
+            smoothScroll();
+        }
+    });
+
+    function smoothScroll() {
+        const step = () => {
+            const distance = scrollAmount / 10;
+            container.scrollLeft += distance;
+            scrollAmount -= distance;
+
+            if (Math.abs(scrollAmount) > 1) {
+                requestAnimationFrame(step);
+            } else {
+                scrollAmount = 0;
+                isScrolling = false;
+            }
+        };
+
+        requestAnimationFrame(step);
+    }
 </script>

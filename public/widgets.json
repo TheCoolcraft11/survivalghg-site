@@ -1,5 +1,12 @@
 [
     {
+        "id": 0,
+        "title": "Empty",
+        "js": "./widgets/js/empty.js",
+        "html": "./widgets/html/empty.html",
+        "dontShow": true
+    },
+    {
         "id": 1,
         "title": "Time",
         "js": "./widgets/js/time.js",

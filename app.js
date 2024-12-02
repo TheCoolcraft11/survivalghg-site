@@ -841,8 +841,7 @@ app.get('/api/backups/status', (req, res) => {
     const { exec } = require('child_process');
     exec(`screen -S ${sessionName} -X hardcopy /tmp/screen.log && cat /tmp/screen.log`, (err, stdout, stderr) => {
         if (err) {
-            console.error(`Error when retrieving screen session: ${err.message}`);
-            return res.status(500).json({ error: 'Screen session could not be read.' });
+            return res.json({ error: 'Screen session could not be read.' });
         }
         if (stderr) {
             console.error(`stderr: ${stderr}`);
