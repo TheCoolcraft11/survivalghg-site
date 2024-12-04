@@ -779,6 +779,9 @@ app.get('/top-processes', (req, res) => {
 
         const lines = stdout.split('\n');
         const headers = lines[0].split(/\s+/);
+
+        const currentPid = process.pid;
+
         const processes = lines.slice(1).map(line => {
             const details = line.split(/\s+/);
             return {
@@ -788,11 +791,12 @@ app.get('/top-processes', (req, res) => {
                 mem: details[3],
                 command: details.slice(10).join(' ')
             };
-        }).filter(process => process.pid);
+        }).filter(process => process.pid && !(process.pid === currentPid.toString() && process.command === 'ps aux'));
         const topProcesses = processes.slice(0, 5);
         res.json(topProcesses);
     });
 });
+
 
 
 const BACKUP_DIR = '/mnt/backup';
@@ -1039,6 +1043,75 @@ function authenticateWsToken(token) {
     }
 }
 
+const storage3 = multer.diskStorage({
+    destination: (req, file, cb) => {
+        if (!req.user || !req.user.id) {
+            return cb(new Error('User not authenticated'), null);
+        }
+
+        const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+        if (!fs.existsSync(userUploadPath)) fs.mkdirSync(userUploadPath, { recursive: true });
+
+        cb(null, userUploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${file.originalname}`;
+        cb(null, uniqueName);
+    }
+});
+
+
+const upload = multer({ storage: storage3 });
+
+app.post('/api/storage/upload', authenticateToken, checkPermission('upload'), upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    res.json({
+        message: 'File uploaded successfully',
+        file: req.file.filename
+    });
+});
+
+app.get('/api/storage/files', authenticateToken, checkPermission('read'), (req, res) => {
+    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    if (!fs.existsSync(userUploadPath)) {
+        return res.json({ files: [] });
+    }
+
+    fs.readdir(userUploadPath, (err, files) => {
+        if (err) return res.status(500).json({ message: 'Error reading files' });
+
+        res.json({ files });
+    });
+});
+
+
+app.get('/api/storage/download/:filename', authenticateToken, checkPermission('read'), (req, res) => {
+    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const filePath = path.join(userUploadPath, req.params.filename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+
+    res.download(filePath);
+});
+
+app.delete('/api/storage/delete/:filename', authenticateToken, checkPermission('delete'), (req, res) => {
+    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const filePath = path.join(userUploadPath, req.params.filename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+
+    fs.unlink(filePath, (err) => {
+        if (err) return res.status(500).json({ message: 'Error deleting file' });
+
+        res.json({ message: 'File deleted successfully' });
+    });
+});
+
 
 const wss2 = new WebSocketServer({ server: wServer2 });
 const IDLE_TIMEOUT = 60000;
@@ -1114,7 +1187,7 @@ wss2.on('connection', (ws, req) => {
 wServer1.listen(8080, () => {
     console.log('WebSocket Server 1 is listening on ws://localhost:8080');
 });
-
+/*
 wServer2.listen(8081, () => {
     console.log('WebSocket Server 2 is listening on ws://localhost:8081');
-});
+}); */

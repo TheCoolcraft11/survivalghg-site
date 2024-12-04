@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #0073e6;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            margin: 0 0 20px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+        }
+
+        form input {
+            flex: 1;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #0073e6;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>My Drive</h1>
+    </header>
+    <main>
+        <section class="upload-section">
+            <h2>Upload File</h2>
+            <form id="uploadForm">
+                <input type="file" id="fileInput" required>
+                <button type="submit">Upload</button>
+            </form>
+        </section>
+
+        <section class="files-section">
+            <h2>Your Files</h2>
+            <ul id="filesList"></ul>
+        </section>
+    </main>
+    <script>
+        const apiBaseUrl = '/api/storage';
+
+        // Upload File
+        document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/upload`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('authToken')}`
+                    }
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('File uploaded successfully!');
+                    fileInput.value = '';
+                    fetchFiles();
+                } else {
+                    alert(result.message || 'Error uploading file.');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Error uploading file.');
+            }
+        });
+
+        async function fetchFiles() {
+            try {
+                const authToken = sessionStorage.getItem('authToken');
+                if (!authToken) {
+                    alert('No authentication token found.');
+                    return;
+                }
+
+                const response = await fetch(`${apiBaseUrl}/files`, {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`
+                    }
+                });
+
+
+                if (!response.ok) {
+                    console.error('API request failed:', response.status, response.statusText);
+                    alert('Error fetching files: ' + response.statusText);
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.files && Array.isArray(result.files)) {
+                    const filesList = document.getElementById('filesList');
+                    filesList.innerHTML = '';
+
+                    result.files.forEach((file) => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                    <span>${file}</span>
+                    <div>
+                        <button onclick="downloadFile('${file}')">Download</button>
+                        <button onclick="deleteFile('${file}')">Delete</button>
+                    </div>
+                `;
+                        filesList.appendChild(listItem);
+                    });
+                } else {
+                    alert('No files found or the response format is incorrect.');
+                }
+            } catch (error) {
+                console.error('Fetch files error:', error);
+                alert('Error fetching files.');
+            }
+        }
+
+
+        // Download File
+        async function downloadFile(filename) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/download/${filename}`, {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('authToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert('Error downloading file.');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading file.');
+            }
+        }
+
+        // Delete File
+        async function deleteFile(filename) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/delete/${filename}`, {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('authToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('File deleted successfully!');
+                    fetchFiles(); // Refresh file list
+                } else {
+                    alert('Error deleting file.');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Error deleting file.');
+            }
+        }
+
+        // Initial fetch of files
+        fetchFiles();
+
+        fetchFiles();
+
+    </script>
+</body>
+
+</html>

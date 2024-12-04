@@ -14,7 +14,10 @@
                 "manage_users",
                 "access_terminal",
                 "view_server_logs",
-                "view_server_status"
+                "view_server_status",
+                "read",
+                "upload",
+                "delete"
             ]
         },
         "moderator": {
@@ -73,7 +76,10 @@
             "description": "Custom role with specific permissions for unique needs.",
             "permissions": [
                 "view_backups",
-                "download_backups"
+                "download_backups",
+                "read",
+                "upload",
+                "delete"
             ]
         }
     }

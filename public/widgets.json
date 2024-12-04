@@ -28,7 +28,7 @@
         "js": "./widgets/js/note.js",
         "html": "./widgets/html/note.html",
         "savable": {
-            "noteWidget-note": "noteTextBox"
+            "noteWidget-note": "markdownField"
         }
     },
     {

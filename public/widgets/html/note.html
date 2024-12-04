@@ -1,51 +1,57 @@
-<div class="card widget-note">
-    <h3>Notes</h3>
-    <textarea class="note" id="noteTextBox" rows="4" placeholder="Type your notes here..."></textarea>
-    <button onclick="saveNote()">Save</button>
-    <div savable name="noteHolder"></div>
-</div>
 <style>
-    .note {
-        width: 85%;
-        height: 70%;
-        padding: 10px;
+    body {
         font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 100%;
+        max-height: 100%;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #markdownField {
+        width: 100h;
+        height: 100vh;
+        margin: 10px;
+        margin-bottom: 20px;
         font-size: 16px;
-        line-height: 1.5;
-        border: 2px solid #ccc;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-        color: #333;
-        box-sizing: border-box;
-        transition: all 0.3s ease;
-        resize: none;
-    }
-
-    .note:focus {
-        border-color: #007bff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        white-space: pre-wrap;
         outline: none;
-        background-color: #fff;
-        box-shadow: 0 0 28px rgba(0, 123, 255, 0.6);
+        overflow: auto;
+        font-family: monospace;
+        opacity: 1;
+        padding: 10px;
     }
 
-    .note::placeholder {
-        color: #aaa;
-        font-style: italic;
-        opacity: 0.8;
-        transition: opacity 0.3s ease;
+    #markdownField:empty:before {
+        content: 'Type your markdown here...';
+        color: #ccc;
     }
 
-    .note:hover {
-        border-color: #007bff;
-        background-color: #f1faff;
+    .note {
+        background-color: #fffae6;
+        border: 1px solid #f0e68c;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 16px;
+        color: #555;
     }
 
-    .note::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .note::-webkit-scrollbar-thumb {
-        background-color: #007bff;
-        border-radius: 10px;
+    .highlight {
+        background-color: yellow;
+        font-weight: bold;
     }
 </style>
+
+<div class="card">
+    <h3>Notes</h3>
+    <div class="container">
+        <div savable id="markdownField" contenteditable="true"></div>
+    </div>
+</div>

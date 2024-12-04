@@ -28,7 +28,9 @@
             overflow: auto;
             margin-left: 10vh;
             margin-right: 10vh;
+            padding: 10px;
         }
+
 
         .grid-container::-webkit-scrollbar {
             display: none;
@@ -320,7 +322,7 @@
             if (!response.ok) throw new Error('Netzwerkproblem: ' + response.statusText);
             const data = await response.json();
             availableWidgets = data;
-            widgetConfig = data;
+            widgetConfig = [...data];
         } catch (error) {
             console.error('Fehler beim Abrufen der Widgets:', error);
             availableWidgets = ['Error'];
@@ -469,10 +471,11 @@
                 const savables = savableVars.get(widget.widgetId);
                 Object.entries(savables).forEach(([savable, value]) => {
                     const storedValue = sessionStorage.getItem(savable);
+                    console.log(savable + " " + storedValue)
                     widgetVars.push({ savable, storedValue });
+                    console.log(widgetVars)
                 });
             }
-
 
 
             return {
@@ -485,6 +488,7 @@
         const token = sessionStorage.getItem('authToken');
         if (token) {
             const jsonData = remove ? null : JSON.stringify(widgetData, null, 2);
+            console.log(jsonData)
             const response = await fetch('/api/dashboard-layout/save', {
                 method: 'POST',
                 headers: {
@@ -549,13 +553,13 @@
                                 setTimeout(() => {
                                     const widgetConfigEntry = widgetConfig.find(widget => widget.id === widgetData.widgetId);
                                     if (widgetConfigEntry && widgetConfigEntry.savable) {
-
                                         widgetData.widgetData.forEach(entry => {
                                             const savableKey = entry.savable;
                                             if (widgetConfigEntry.savable[savableKey]) {
                                                 const savableValue = widgetConfigEntry.savable[savableKey];
-
-                                                document.getElementById(savableValue).value = entry.storedValue;
+                                                waitForElement(savableValue, element => {
+                                                    element.innerHTML = entry.storedValue;
+                                                });
                                             }
                                         });
                                     }
@@ -566,6 +570,23 @@
                 }
             }
         }
+    }
+
+    function waitForElement(selector, callback, timeout = 50) {
+        const observer = new MutationObserver((mutations, obs) => {
+            const element = document.getElementById(selector);
+            if (element) {
+                callback(element);
+                obs.disconnect();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        setTimeout(() => observer.disconnect(), timeout);
     }
 
     function toggleButtons() {
