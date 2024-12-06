@@ -39,11 +39,11 @@ function toggleGame() {
     isCoinGame = !isCoinGame;
 
     if (isCoinGame) {
-        button.textContent = 'Würfeln';
+        button.textContent = 'Dice';
         coinContainer.style.display = 'flex';
         diceContainer.style.display = 'none';
     } else {
-        button.textContent = 'Münzwurf';
+        button.textContent = 'Coin';
         coinContainer.style.display = 'none';
         diceContainer.style.display = 'flex';
     }

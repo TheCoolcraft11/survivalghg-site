@@ -17,7 +17,8 @@
                 "view_server_status",
                 "read",
                 "upload",
-                "delete"
+                "delete",
+                "share"
             ]
         },
         "moderator": {
@@ -79,7 +80,8 @@
                 "download_backups",
                 "read",
                 "upload",
-                "delete"
+                "delete",
+                "share"
             ]
         }
     }

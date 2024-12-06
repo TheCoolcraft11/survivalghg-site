@@ -20,6 +20,10 @@
             align-items: center;
         }
 
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
         .grid-container {
             display: grid;
             grid-template-columns: repeat(7, 325px);
@@ -609,6 +613,10 @@
 
     container.addEventListener('wheel', (e) => {
         const target = e.target;
+
+        if (target.hasAttribute('ignoreScroll')) {
+            return;
+        }
 
         if (target !== container && (target.scrollHeight > target.clientHeight || target.scrollWidth > target.clientWidth)) {
             return;

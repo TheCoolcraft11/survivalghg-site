@@ -904,29 +904,53 @@ app.delete('/api/backups/:filename', authenticateToken, checkPermission('delete_
 app.get('/users', authenticateToken, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
-
 app.get('/weather', async (req, res) => {
     const city = req.query.city;
+    const units = req.query.units;
+    const lang = req.query.lang;
     if (!city) {
         return res.status(400).send({ error: 'City is required' });
     }
 
     const apiKey = process.env.WEATHER_API;
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=de`;
+    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${units}&lang=${lang}`;
 
     try {
-        const response = await axios.get(url);
-        const data = response.data;
 
-        const temperature = data.main.temp;
-        const description = data.weather[0].description;
-        const iconCode = data.weather[0].icon;
+        const currentWeatherResponse = await axios.get(currentWeatherUrl);
+        const currentWeather = currentWeatherResponse.data;
+
+        const temperature = currentWeather.main.temp;
+        const description = currentWeather.weather[0].description;
+        const iconCode = currentWeather.weather[0].icon;
         const iconUrl = `http://openweathermap.org/img/wn/${iconCode}@4x.png`;
 
+        const forecastResponse = await axios.get(forecastUrl);
+        const forecastData = forecastResponse.data.list.slice(0, 5);
+
+        const forecast = forecastData.map(item => {
+            const time = item.dt_txt;
+            const temp = item.main.temp;
+            const description = item.weather[0].description;
+            const iconCode = item.weather[0].icon;
+            const iconUrl = `http://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+            return {
+                time,
+                temperature: temp,
+                description,
+                iconUrl
+            };
+        });
+
         res.json({
-            temperature,
-            description,
-            iconUrl
+            currentWeather: {
+                temperature,
+                description,
+                iconUrl
+            },
+            forecast
         });
     } catch (error) {
         console.error('Error fetching weather data:', error);
@@ -1060,17 +1084,55 @@ const storage3 = multer.diskStorage({
     }
 });
 
+function checkStorageLimit(req, res, next) {
+    const userId = req.user.id;
 
-const upload = multer({ storage: storage3 });
+    const currentUsage = getUserStorageUsage(userId);
 
-app.post('/api/storage/upload', authenticateToken, checkPermission('upload'), upload.single('file'), (req, res) => {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    if (currentUsage >= STORAGE_LIMIT) {
+        return res.status(400).json({ message: 'Storage limit exceeded. Please delete files to free up space.' });
+    }
 
-    res.json({
-        message: 'File uploaded successfully',
-        file: req.file.filename
+    next();
+}
+
+
+
+app.post('/api/storage/upload', authenticateToken, checkPermission('upload'), checkStorageLimit, (req, res) => {
+    const userId = req.user.id;
+
+    const currentUsage = getUserStorageUsage(userId);
+
+    if (currentUsage >= STORAGE_LIMIT) {
+        return res.status(400).json({ message: 'Storage limit exceeded. Please delete files to free up space.' });
+    }
+
+    const upload = multer({ storage: storage3 }).single('file');
+
+    upload(req, res, (err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error uploading file' });
+        }
+
+        res.json({
+            message: 'File uploaded successfully',
+            file: req.file.filename
+        });
     });
 });
+
+app.get('/api/storage/usage', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const currentUsage = getUserStorageUsage(userId);
+
+    res.json({
+        storageUsage: {
+            total: currentUsage,
+            limit: STORAGE_LIMIT
+        }
+    });
+});
+
 
 app.get('/api/storage/files', authenticateToken, checkPermission('read'), (req, res) => {
     const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
@@ -1112,6 +1174,81 @@ app.delete('/api/storage/delete/:filename', authenticateToken, checkPermission('
     });
 });
 
+const { v4: uuidv4 } = require('uuid');
+const sharedFiles = {};
+
+app.post('/api/storage/share/:filename', authenticateToken, checkPermission('share'), (req, res) => {
+    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const filePath = path.join(userUploadPath, req.params.filename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+
+    const shareToken = uuidv4();
+
+    if (!sharedFiles[req.params.filename]) {
+        sharedFiles[req.params.filename] = [];
+    }
+
+    sharedFiles[req.params.filename].push({
+        token: shareToken,
+        sharedBy: req.user.id,
+        sharedAt: Date.now()
+    });
+
+    const shareUrl = `${req.protocol}://${req.get('host')}/api/storage/shared/${req.params.filename}/${shareToken}`;
+
+    res.json({
+        message: 'File shared successfully',
+        shareUrl: shareUrl
+    });
+});
+
+app.get('/api/storage/shared/:filename/:token', (req, res) => {
+    const { filename, token } = req.params;
+
+    if (!sharedFiles[filename]) {
+        return res.status(404).json({ message: 'File not found or not shared' });
+    }
+
+    const shareEntry = sharedFiles[filename].find(entry => entry.token === token);
+
+    if (!shareEntry) {
+        return res.status(404).json({ message: 'Invalid or expired share token' });
+    }
+
+    const userUploadPath = path.join(__dirname, 'uploads', shareEntry.sharedBy.toString());
+    const filePath = path.join(userUploadPath, filename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+
+
+    res.download(filePath);
+});
+
+const STORAGE_LIMIT = 100 * 1024;
+
+function getUserStorageUsage(userId) {
+    const userUploadPath = path.join(__dirname, 'uploads', `${userId}`);
+
+    if (!fs.existsSync(userUploadPath)) {
+        return 0;
+    }
+
+    let totalSize = 0;
+    const files = fs.readdirSync(userUploadPath);
+
+    files.forEach((file) => {
+        const filePath = path.join(userUploadPath, file);
+        const stat = fs.statSync(filePath);
+        totalSize += stat.size;
+    });
+
+    return totalSize;
+}
 
 const wss2 = new WebSocketServer({ server: wServer2 });
 const IDLE_TIMEOUT = 60000;

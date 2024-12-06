@@ -1,5 +1,79 @@
-<div class="card widget-weather" style="overflow: hidden;">
-    <h2>Wetter Widget</h2>
-    <p>Aktuelles Wetter: <span id="weatherInfo" class="weatherInfo">Lädt...</span></p>
-    <img id="weatherIcon" src="" alt="Wetter Icon" style="display:none;" />
+<div class="card widget-weather" style="overflow: auto;">
+    <h2 id="weatherTitle" ignoreScroll>Wetter Widget</h2>
+    <p ignoreScroll><span id="weatherInfo" class="weatherInfo">Lädt...</span></p>
+    <img id="weatherIcon" src="" alt="Weather Icon" style="display:none;" />
+
+    <div id="forecastContainer" class="forecast-container">
+        <!-- Vertical line (stays static) -->
+        <div class="timeline-line"></div>
+    </div>
 </div>
+
+<style>
+    .widget-weather {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin: 20px;
+    }
+
+    .forecast-container {
+        position: relative;
+        width: 200px;
+        margin-left: 50px;
+    }
+
+    .forecast-container::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 50%;
+        background-color: #00b7ff;
+    }
+
+    .forecast-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .timeline-point {
+        width: 20px;
+        height: 20px;
+        background-color: #0084ff;
+        z-index: 2;
+        border-radius: 50%;
+        position: absolute;
+        left: -30px;
+        top: -2px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+    }
+
+
+    .forecast-details {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .forecast-details p {
+        margin: 0;
+        font-weight: bold;
+    }
+
+    .forecast-details img {
+        width: 40px;
+        height: 40px;
+        margin-top: 5px;
+    }
+</style>
