@@ -1,0 +1,78 @@
+<div class="card">
+    <img id="profile_picture" src="https://via.placeholder.com/80" alt="Profile Avatar" class="profile-avatar">
+    <div class="profile-info">
+        <p id="greeting" class="profile-greeting">Hello, </p>
+        <p id="user_name" class="user-name">User</p>
+        <p id="exclamation" class="profile-exclamation">!</p>
+        </p>
+    </div>
+    <div style="display: none;" id="colorPalette" style="display: flex;"></div>
+</div>
+
+<style>
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+    }
+
+    .profile-info {
+        margin-bottom: 10px;
+    }
+
+    .profile-info span {
+        font-weight: bold;
+        color: #007BFF;
+    }
+
+    .profile-info {
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-greeting,
+    .user-name,
+    .profile-exclamation {
+        margin: 0;
+        display: inline;
+    }
+
+    .profile-exclamation {
+        font-size: 2.5rem;
+    }
+
+    .profile-greeting {
+        color: #333;
+        font-size: 2.5rem;
+        font-weight: 600;
+    }
+
+    @keyframes gradientAnimation {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .user-name {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(45deg, #caf312, #f39c12, #b60a0a);
+        background-size: 400% 400%;
+        animation: gradientAnimation 3s ease infinite;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        display: inline-block;
+    }
+</style>

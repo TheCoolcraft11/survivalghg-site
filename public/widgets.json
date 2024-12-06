@@ -113,5 +113,11 @@
         "title": "Console",
         "js": "./widgets/js/console.js",
         "html": "./widgets/html/console.html"
+    },
+    {
+        "id": 14,
+        "title": "Hello",
+        "js": "./widgets/js/profile.js",
+        "html": "./widgets/html/profile.html"
     }
 ]

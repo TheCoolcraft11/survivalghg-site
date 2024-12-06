@@ -45,6 +45,8 @@ function parseMarkdown(input) {
 
 
 function reverseMarkdown(input) {
+    input = cleanInput(input);
+    console.log(input)
     input = input.replace(/<h1>(.*?)<\/h1>/g, '# $1');
 
     input = input.replace(/<h2>(.*?)<\/h2>/g, '## $1');
@@ -73,6 +75,12 @@ function reverseMarkdown(input) {
     });
 
     return input;
+}
+
+function cleanInput(input) {
+    console.log(input)
+    return input.replace(/style="[^"]*"/g, '')
+        .replace(/class="(?!highlight|note)[^"]*"/g, '');
 }
 
 
