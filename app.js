@@ -595,6 +595,23 @@ app.post('/api/upload-screenshot', screenshotStorage.single('file'), async (req,
         res.status(500).send('Error processing file.');
     }
 });
+
+app.delete('/api/delete-screenshot/:filename', authenticateToken, checkPermission('delete-screenshot'), (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join('uploads/screenshots/', filename);
+
+    if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to delete file' });
+            }
+            res.json({ message: 'File deleted successfully', success: true });
+        });
+    } else {
+        res.status(404).json({ error: 'File not found' });
+    }
+});
+
 app.set('view engine', 'ejs');
 
 app.get('/screenshots', (req, res) => {
@@ -694,12 +711,10 @@ app.post('/api/users/:id', authenticateToken, checkPermission('manage_users'), a
     const name = req.body.name;
     const password = req.body.password;
     const method = req.body.method;
-    console.log(userId + " " + role)
     if (method) {
         if (method == "role") {
             if (userId && role) {
                 db.query('UPDATE users SET role = ? WHERE id = ?', [role, userId], (err, results) => {
-                    console.log("test " + err)
                     if (err) throw err;
                     res.json({ success: true });
                 });
@@ -817,7 +832,7 @@ app.get('/api/backups', authenticateToken, checkPermission('view_backups'), (req
                     name: file,
                     size: (stats.size / (1024 * 1024)).toFixed(2) + ' MB',
                     createdAt: stats.birthtime.toISOString(),
-                    downloadUrl: `/download/${file}`
+                    downloadUrl: `/api/backup/download/${file}`
                 };
             });
 
@@ -860,7 +875,7 @@ app.get('/api/backups/status', (req, res) => {
 
 
 
-app.get('/download/:filename', authenticateToken, checkPermission('download_backups'), (req, res) => {
+app.get('/api/backup/download/:filename', authenticateToken, checkPermission('download_backups'), (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(BACKUP_DIR, filename);
 
@@ -1073,94 +1088,158 @@ const storage3 = multer.diskStorage({
             return cb(new Error('User not authenticated'), null);
         }
 
-        const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
-        if (!fs.existsSync(userUploadPath)) fs.mkdirSync(userUploadPath, { recursive: true });
+        const userUploadPath = path.join(__dirname, 'uploads/storage', `${req.user.id}`);
+
+        // Create directory if it doesn't exist
+        fs.mkdirSync(userUploadPath, { recursive: true });
 
         cb(null, userUploadPath);
     },
     filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
+        // Sanitize filename and ensure uniqueness
+        const sanitizedFilename = path.basename(file.originalname)
+            .normalize('NFKD')
+            .replace(/[^\w.-]/g, '');
+        const uniqueName = `${Date.now()}-${sanitizedFilename}`;
         cb(null, uniqueName);
     }
 });
 
-function checkStorageLimit(req, res, next) {
-    const userId = req.user.id;
 
+
+function checkStorageLimit(req, res, next) {
+    const userRole = req.user.role;
+
+    if (!roles[userRole]) {
+        return res.status(403).json({ message: 'Access denied: Invalid role' });
+    }
+
+    const storageLimitMB = roles[userRole].storageLimit;
+    const storageLimit = storageLimitMB * 1024 * 1024;
+
+    const userId = req.user.id;
     const currentUsage = getUserStorageUsage(userId);
 
-    if (currentUsage >= STORAGE_LIMIT) {
-        return res.status(400).json({ message: 'Storage limit exceeded. Please delete files to free up space.' });
+    if (req.body.fileSize) {
+        const newFileSize = parseInt(req.body.fileSize, 10);
+        const totalUsageAfterUpload = currentUsage + newFileSize;
+
+        if (storageLimit > 0) {
+
+            if (totalUsageAfterUpload > storageLimit) {
+                return res.status(400).json({
+                    message: `Storage limit exceeded for role '${userRole}'. You can only upload ${storageLimit - currentUsage} bytes more.`
+                });
+            }
+        }
     }
 
     next();
 }
 
-
-
-app.post('/api/storage/upload', authenticateToken, checkPermission('upload'), checkStorageLimit, (req, res) => {
-    const userId = req.user.id;
-
-    const currentUsage = getUserStorageUsage(userId);
-
-    if (currentUsage >= STORAGE_LIMIT) {
-        return res.status(400).json({ message: 'Storage limit exceeded. Please delete files to free up space.' });
+app.post('/api/storage/upload', authenticateToken, checkPermission('upload'), (req, res, next) => {
+    const userRole = req.user.role;
+    if (!roles[userRole]) {
+        return res.status(403).json({ message: 'Access denied: Invalid role' });
     }
 
-    const upload = multer({ storage: storage3 }).single('file');
+    const storageLimitMB = roles[userRole].storageLimit;
+    const storageLimit = storageLimitMB * 1024 * 1024;
+
+    const upload = multer({
+        storage: storage3,
+        fileFilter: (req, file, cb) => {
+            const userId = req.user.id;
+            const currentUsage = getUserStorageUsage(userId);
+            const fileSize = parseInt(req.headers['content-length'], 10);
+
+            if (storageLimit > 0) {
+                if (currentUsage + fileSize > storageLimit) {
+                    return cb(new Error('Storage limit exceeded'), false);
+                }
+            }
+            cb(null, true);
+        },
+    }).array('files', 100);
 
     upload(req, res, (err) => {
         if (err) {
-            return res.status(500).json({ message: 'Error uploading file' });
+            console.log(err)
+            return res.status(400).json({ message: 'Error uploading files: ' + err.message });
         }
 
-        res.json({
-            message: 'File uploaded successfully',
-            file: req.file.filename
-        });
+        next();
+    });
+}, checkStorageLimit, (req, res) => {
+    const uploadedFiles = req.files.map(file => file.filename);
+
+    res.json({
+        message: 'Files uploaded successfully!',
+        files: uploadedFiles
     });
 });
 
+
+
 app.get('/api/storage/usage', authenticateToken, (req, res) => {
+    const userRole = req.user.role;
     const userId = req.user.id;
+
+    if (!roles[userRole]) {
+        return res.status(403).json({ message: 'Access denied: Invalid role' });
+    }
+
     const currentUsage = getUserStorageUsage(userId);
+    const storageLimitMB = roles[userRole].storageLimit;
+    const storageLimit = storageLimitMB * 1024 * 1024;
 
     res.json({
         storageUsage: {
             total: currentUsage,
-            limit: STORAGE_LIMIT
+            limit: storageLimit
         }
     });
 });
 
 
 app.get('/api/storage/files', authenticateToken, checkPermission('read'), (req, res) => {
-    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', `${req.user.id}`);
+
     if (!fs.existsSync(userUploadPath)) {
         return res.json({ files: [] });
     }
 
-    fs.readdir(userUploadPath, (err, files) => {
+    fs.readdir(userUploadPath, { encoding: 'utf8' }, (err, files) => {
         if (err) return res.status(500).json({ message: 'Error reading files' });
 
-        res.json({ files });
+        const normalizedFiles = files.map(file => {
+            return Buffer.from(file, 'latin1').toString('utf8');
+        });
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.json({ files: normalizedFiles });
     });
 });
 
 
 app.get('/api/storage/download/:filename', authenticateToken, checkPermission('read'), (req, res) => {
-    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', `${req.user.id}`);
     const filePath = path.join(userUploadPath, req.params.filename);
 
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: 'File not found' });
     }
 
-    res.download(filePath);
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Error serving file:', err);
+            res.status(500).json({ message: 'Error serving file' });
+        }
+    });
 });
 
 app.delete('/api/storage/delete/:filename', authenticateToken, checkPermission('delete'), (req, res) => {
-    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', `${req.user.id}`);
     const filePath = path.join(userUploadPath, req.params.filename);
 
     if (!fs.existsSync(filePath)) {
@@ -1176,10 +1255,15 @@ app.delete('/api/storage/delete/:filename', authenticateToken, checkPermission('
 
 const { v4: uuidv4 } = require('uuid');
 const sharedFiles = {};
+const BASE_URL = process.env.BASE_URL;
 
 app.post('/api/storage/share/:filename', authenticateToken, checkPermission('share'), (req, res) => {
-    const userUploadPath = path.join(__dirname, 'uploads', `${req.user.id}`);
-    const filePath = path.join(userUploadPath, req.params.filename);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', `${req.user.id}`);
+    const decodedFilename = decodeURIComponent(req.params.filename);
+    const filePath = path.join(userUploadPath, decodedFilename);
+
+    console.log("Decoded Filename:", decodedFilename);
+    console.log("File Path:", filePath);
 
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: 'File not found' });
@@ -1187,17 +1271,18 @@ app.post('/api/storage/share/:filename', authenticateToken, checkPermission('sha
 
     const shareToken = uuidv4();
 
-    if (!sharedFiles[req.params.filename]) {
-        sharedFiles[req.params.filename] = [];
+    if (!sharedFiles[decodedFilename]) {
+        sharedFiles[decodedFilename] = [];
     }
 
-    sharedFiles[req.params.filename].push({
+    sharedFiles[decodedFilename].push({
         token: shareToken,
         sharedBy: req.user.id,
         sharedAt: Date.now()
     });
 
-    const shareUrl = `${req.protocol}://${req.get('host')}/api/storage/shared/${req.params.filename}/${shareToken}`;
+    const encodedFilename = encodeURIComponent(decodedFilename);
+    const shareUrl = `${BASE_URL}/api/storage/shared/${encodedFilename}/${shareToken}`;
 
     res.json({
         message: 'File shared successfully',
@@ -1205,34 +1290,37 @@ app.post('/api/storage/share/:filename', authenticateToken, checkPermission('sha
     });
 });
 
+
+
 app.get('/api/storage/shared/:filename/:token', (req, res) => {
     const { filename, token } = req.params;
 
-    if (!sharedFiles[filename]) {
+    const decodedFilename = decodeURIComponent(filename);
+
+    if (!sharedFiles[decodedFilename]) {
         return res.status(404).json({ message: 'File not found or not shared' });
     }
 
-    const shareEntry = sharedFiles[filename].find(entry => entry.token === token);
+    const shareEntry = sharedFiles[decodedFilename].find(entry => entry.token === token);
 
     if (!shareEntry) {
         return res.status(404).json({ message: 'Invalid or expired share token' });
     }
 
-    const userUploadPath = path.join(__dirname, 'uploads', shareEntry.sharedBy.toString());
-    const filePath = path.join(userUploadPath, filename);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', shareEntry.sharedBy.toString());
+    const filePath = path.join(userUploadPath, decodedFilename);
 
     if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: 'File not found' });
     }
 
-
     res.download(filePath);
 });
 
-const STORAGE_LIMIT = 100 * 1024;
+
 
 function getUserStorageUsage(userId) {
-    const userUploadPath = path.join(__dirname, 'uploads', `${userId}`);
+    const userUploadPath = path.join(__dirname, 'uploads/storage', `${userId}`);
 
     if (!fs.existsSync(userUploadPath)) {
         return 0;

@@ -139,6 +139,20 @@
             animation: fadeIn 1s ease-out;
         }
 
+        @keyframes mark {
+            from {
+                background-color: yellow;
+            }
+
+            to {
+                background-color: black;
+            }
+        }
+
+        .jumped-message {
+            animation: mark 4s ease-out;
+        }
+
         ::-webkit-scrollbar {
             width: 20px;
         }
@@ -592,6 +606,40 @@
             color: #000;
         }
 
+
+        .server-actions {
+            display: none;
+            position: absolute;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding-top: 40px;
+            overflow: hidden;
+            z-index: 1000;
+            background-color: rgba(172, 172, 172, 0.5);
+            border-radius: 10px;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .actions-btn {
+            transform: translateY(-50%);
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            z-index: 10;
+            align-content: center;
+        }
+
+        .clickedElement {
+            background-color: #00ab00;
+        }
+
         @media (max-width: 768px) {
             .console {
                 width: 40vh;
@@ -639,6 +687,8 @@
                 bottom: 7%;
                 padding: 10px;
             }
+
+
 
             .server-links h3 {
                 margin-bottom: 40px;
@@ -736,7 +786,7 @@
                         <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
                                 id="filter-info" class="filter-checkbox" value="info" checked> Information</label>
                         <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
-                                id="filter-other" class="filter-checkbox" value="chatmsg" checked> <br>Chat</label>
+                                id="filter-chatmsg" class="filter-checkbox" value="chatmsg" checked> <br>Chat</label>
                         <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
                                 id="filter-other" class="filter-checkbox" value="other" checked> <br>Other</label>
                     </div>
@@ -746,17 +796,43 @@
     </div>
     </div>
 
+    <div class="server-actions" id="customMenu">
+        <button class="actions-btn" onclick="jumpToMessage(clickedElement)">Jump To Message</button>
+        <button class="actions-btn" onclick="hideMessageType()">Hide Message Type</button>
+        <button class="actions-btn" onclick="downloadLog()">Download Log</button>
+    </div>
 
 </body>
 
 </html>
 <script>
 
+    function hideMessageType() {
+        addFilter(clickedElement.dataset.type, false); document.getElementById(`filter-${clickedElement.dataset.type}`).checked = false;
+    }
+
     const filterButton = document.getElementById('filter-toggle-button');
     const filterDropdown = document.getElementById('filter-dropdown');
     filterButton.addEventListener('click', () => {
         filterDropdown.classList.toggle('filter-show');
     });
+    function jumpToMessage(message) {
+        filterTypes = ['all', 'joinorleft', 'cmdexec', 'deathmsg', 'warn', 'error', 'info', 'chatmsg', 'other'];
+
+        filterMessages();
+        document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+
+        message.classList.add('jumped-message');
+
+        window.location.hash = message.id;
+
+        setTimeout(() => {
+            message.classList.remove('jumped-message');
+        }, 4000);
+    }
+
 
     document.addEventListener('click', (event) => {
         if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
@@ -1152,16 +1228,16 @@
         warnRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(WARN|WARNING)/i,
         errorRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(ERR|ERROR)/i,
         infoRegex: /[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?.*(INFO)/i,
-        joinRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[A-Za-z0-9]+(\s\[[^\]]*\])? joined the game/i,
-        leftRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[A-Za-z0-9]+(\s\[[^\]]*\])? left the game/i,
-        commandRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: [A-Za-z0-9]+ issued server command: \/[^ ]+/i,
+        joinRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[\w\s\S]+(\s\[[^\]]*\])? joined the game/i,
+        leftRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: (\[[^\]]*\] )?[\w\s\S]+(\s\[[^\]]*\])? left the game/i,
+        commandRegex: /\[[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\] \[[^\]]+\]: [\w\s\S]+ issued server command: \/[^ ]+/i,
 
     };
 
     let socket;
     let isBackup = false;
     let receivedMessages = [];
-    let filterTypes = ['all', 'joinorleft', 'cmdexec', 'deathmsg', 'warn', 'error', 'info', 'chat', 'other'];
+    let filterTypes = ['all', 'joinorleft', 'cmdexec', 'deathmsg', 'warn', 'error', 'info', 'chatmsg', 'other'];
 
     function connectWebSocket() {
         socket = new WebSocket('ws://' + window.location.origin.replace('http://', '') + '/ws1');
@@ -1205,10 +1281,11 @@
 
                         lineElement.textContent = line;
                         lineElement.classList.add("message-div");
-                        lineElement.id = 'message'
+                        lineElement.id = 'message_' + Date.now();
                         lineElement.classList.add('new-message');
                         outputDiv.appendChild(lineElement);
                         filterMessages();
+                        addMenuListeners();
 
                         setTimeout(() => {
                             lineElement.classList.remove('new-message');
@@ -1373,7 +1450,6 @@
         if (isChecked) {
             if (!filterTypes.includes(value)) {
                 filterTypes.push(value);
-                console.log(`Filter hinzugefügt: ${value}`);
             }
         } else {
             filterTypes = filterTypes.filter(filter => filter !== value);
@@ -1382,10 +1458,9 @@
     }
 
     function filterMessages(types = filterTypes) {
-        const messages = document.querySelectorAll('#console #message');
+        const messages = document.querySelectorAll('#console .message-div');
 
         messages.forEach((message) => {
-            console.log(message.getAttribute('data-type'))
             if (types.includes(message.getAttribute('data-type'))) {
                 message.style.display = 'block';
             } else {
@@ -1394,6 +1469,90 @@
         });
     }
 
+    const customMenu = document.getElementById('customMenu');
+    let clickedElement = null;
+
+    function showMenu(x, y) {
+        customMenu.style.left = `${x}px`;
+        customMenu.style.top = `${y}px`;
+        customMenu.style.display = 'flex';
+    }
+
+    function hideMenu() {
+        customMenu.style.display = 'none';
+        document.querySelectorAll('.clickedElement').forEach(element => {
+            element.classList.remove('clickedElement');
+        });
+
+        clickedElement = null;
+    }
+
+    async function addMenuListeners() {
+        const outputDiv = document.getElementById('console');
+
+        outputDiv.addEventListener('contextmenu', (event) => {
+            if (event.target && event.target.classList.contains('message-div')) {
+                event.preventDefault();
+                clickedElement = event.target;
+                event.target.classList.add('clickedElement');
+                showMenu(event.pageX, event.pageY);
+                setTimeout(() => {
+                    event.target.classList.remove('clickedElement');
+                }, 250)
+
+            }
+        });
+        document.addEventListener('click', () => hideMenu());
+
+        let touchTimer;
+        outputDiv.addEventListener('touchstart', (event) => {
+            if (event.target && event.target.classList.contains('message-div')) {
+                touchTimer = setTimeout(() => {
+                    const touch = event.touches[0];
+                    clickedElement = event.target;
+                    showMenu(touch.pageX, touch.pageY);
+                }, 500);
+            }
+        });
+
+        outputDiv.addEventListener('touchend', () => {
+            clearTimeout(touchTimer);
+            hideMenu();
+        });
+    }
+
+
+    function isVisible(element) {
+        const style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+
+    function downloadLog() {
+        const consoleContent = document.getElementById('console').children;
+        let textToDownload = '';
+
+        const header = "==== Console Messages ====\n";
+        const date = new Date();
+        const dateString = `Date: ${date.toLocaleString()}\n`;
+        const userData = `Downloaded by: ${parseJwt(token).username || 'Guest'}\n\n`;
+
+        textToDownload += header;
+        textToDownload += dateString;
+        textToDownload += userData;
+
+        for (let i = 0; i < consoleContent.length; i++) {
+            if (isVisible(consoleContent[i])) {
+                textToDownload += consoleContent[i].innerText + '\n';
+            }
+        }
+
+        const blob = new Blob([textToDownload], { type: 'text/plain' });
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = 'console.txt';
+        downloadLink.click();
+    };
 </script>
 </body>
 

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <title>Drive</title>
     <style>
         body {
@@ -12,6 +13,7 @@
             padding: 0;
             background-color: #f4f4f4;
             color: #333;
+            overflow: hidden;
         }
 
         header {
@@ -22,12 +24,13 @@
         }
 
         main {
-            max-width: 800px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            max-width: 1200px;
             margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: 100vh;
+            overflow-y: auto;
         }
 
         h1,
@@ -39,21 +42,46 @@
             margin-bottom: 40px;
         }
 
-        form {
-            display: flex;
-            gap: 10px;
+        section h2,
+        section h3 {
+            text-align: center;
         }
 
-        form input {
-            flex: 1;
+        #previewSection {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            grid-column: 2 / 3;
         }
 
-        ul {
+
+        .files-section {
+            grid-column: 1 / 2;
+            margin-bottom: 120px;
+        }
+
+        aside {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            grid-column: 2 / 3;
+        }
+
+        .file-list,
+        #filesList {
             list-style-type: none;
             padding: 0;
         }
 
-        ul li {
+        .file-list li,
+        #filesList li {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -62,6 +90,11 @@
             margin-bottom: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+
+        .file-list i,
+        #filesList i {
+            margin-right: 10px;
         }
 
         button {
@@ -76,6 +109,75 @@
         button:hover {
             background-color: #005bb5;
         }
+
+        .download-btn {
+            background-color: #0073e6;
+        }
+
+        .download-btn:hover {
+            background-color: #005bb5;
+        }
+
+        .delete-btn {
+            background-color: #ff0000;
+        }
+
+        .delete-btn:hover {
+            background-color: #ac0909;
+        }
+
+        .share-btn {
+            background-color: #0cad0c;
+        }
+
+        .share-btn:hover {
+            background-color: #167e16;
+        }
+
+        #shareModal {
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        #shareModal button {
+            margin: 5px;
+        }
+
+        #storageUsage {
+            text-align: center;
+        }
+
+        .upload-section,
+        .storage-section {
+            text-align: center;
+        }
+
+        .upload-section form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .upload-section input {
+            flex: 1;
+        }
+
+        #shareModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        #shareModal button {
+            margin: 5px;
+        }
     </style>
 </head>
 
@@ -84,37 +186,63 @@
         <h1>My Drive</h1>
     </header>
     <main>
-        <section>
-            <h3>Storage Usage</h3>
-            <p id="storageUsage">Loading...</p>
-        </section>
-        <section class="upload-section">
-            <h2>Upload File</h2>
-            <form id="uploadForm">
-                <input type="file" id="fileInput" required>
-                <button type="submit">Upload</button>
-            </form>
-        </section>
+        <div class="container">
+            <section class="storage-section">
+                <h3>Storage Usage</h3>
+                <p id="storageUsage">Loading...</p>
+            </section>
 
+            <section class="upload-section">
+                <h2>Upload Files</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="file" id="fileInput" name="file" multiple required>
+                    <button type="submit">Upload</button>
+                </form>
+            </section>
+        </div>
         <section class="files-section">
             <h2>Your Files</h2>
             <ul id="filesList"></ul>
         </section>
+        <aside id="previewSection">
+            <h3>File Preview</h3>
+            <div id="previewContent"></div>
+            <button onclick="closePreview()">Close Preview</button>
+        </aside>
     </main>
+
+    <div id="shareModal">
+        <h3>Share File</h3>
+        <p id="shareLink"></p>
+        <button id="copyButton">Copy Link</button>
+        <button onclick="closeModal()">Close</button>
+    </div>
+    <div id="shareModal"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 300px; text-align: center;">
+        <h3>Share File</h3>
+        <p id="shareLink"></p>
+        <button id="copyButton">Copy Link</button>
+        <button onclick="closeModal()">Close</button>
+    </div>
+
+
+
     <script>
         const apiBaseUrl = '/api/storage';
 
         document.getElementById('uploadForm').addEventListener('submit', async (event) => {
             event.preventDefault();
             const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file to upload.');
+            const files = fileInput.files;
+            if (files.length === 0) {
+                alert('Please select at least one file to upload.');
                 return;
             }
 
             const formData = new FormData();
-            formData.append('file', file);
+            Array.from(files).forEach(file => {
+                formData.append('files', file, file.name.replace('ü', 'ue').replace('ä', 'ae').replace('ö', 'oe').replace('ß', 'ss'));
+            });
 
             try {
                 const response = await fetch(`${apiBaseUrl}/upload`, {
@@ -127,23 +255,26 @@
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert('File uploaded successfully!');
+                    alert('Files uploaded successfully!');
                     fileInput.value = '';
                     fetchFiles();
+                    fetchStorageUsage();
                 } else {
-                    alert(result.message || 'Error uploading file.');
+                    alert(result.message || 'Error uploading files.');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                alert('Error uploading file.');
+                alert('Error uploading files.');
             }
         });
 
         async function fetchFiles() {
             try {
                 const authToken = sessionStorage.getItem('authToken');
+
                 if (!authToken) {
                     alert('No authentication token found.');
+                    window.location.href = '/login';
                     return;
                 }
 
@@ -152,6 +283,12 @@
                         Authorization: `Bearer ${authToken}`
                     }
                 });
+
+                if (response.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '/login';
+                    return;
+                }
 
                 if (!response.ok) {
                     console.error('API request failed:', response.status, response.statusText);
@@ -166,15 +303,112 @@
                     filesList.innerHTML = '';
 
                     result.files.forEach((file) => {
+                        const cleanFileName = file.replace(/^\d+-/, '');
                         const listItem = document.createElement('li');
+
+                        let filePreview = '';
+                        let iconClass = '';
+                        const fileExtension = file.split('.').pop().toLowerCase();
+                        switch (fileExtension) {
+                            case 'zip':
+                                iconClass = 'fas fa-file-archive';
+                                break;
+                            case 'js':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'txt':
+                                iconClass = 'fas fa-file-alt';
+                                break;
+                            case 'html':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'css':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'pdf':
+                                iconClass = 'fas fa-file-pdf';
+                                break;
+                            case 'jpg':
+                            case 'jpeg':
+                            case 'png':
+                            case 'gif':
+                            case 'webp':
+                                iconClass = 'fas fa-image';
+                                break;
+                            case 'mp3':
+                            case 'wav':
+                            case 'ogg':
+                                iconClass = 'fas fa-file-audio';
+                                break;
+                            case 'mp4':
+                            case 'webm':
+                                iconClass = 'fas fa-file-video';
+                                break;
+                            case 'xlsx':
+                                iconClass = 'fas fa-file-excel';
+                                break;
+                            case 'docx':
+                                iconClass = 'fas fa-file-word';
+                                break;
+                            case 'pptx':
+                                iconClass = 'fas fa-file-powerpoint';
+                                break;
+                            case 'csv':
+                                iconClass = 'fas fa-file-csv';
+                                break;
+                            case 'json':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'md':
+                                iconClass = 'fas fa-file-alt';
+                                break;
+                            case 'xml':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'log':
+                                iconClass = 'fas fa-file-alt';
+                                break;
+                            case 'svg':
+                                iconClass = 'fas fa-file-image';
+                                break;
+                            case 'bat':
+                                iconClass = 'fas fa-file-code';
+                                break;
+                            case 'exe':
+                                iconClass = 'fas fa-cogs';
+                                break;
+                            case 'apk':
+                                iconClass = 'fas fa-cogs';
+                                break;
+                            case 'psd':
+                                iconClass = 'fas fa-image';
+                                break;
+                            case 'torrent':
+                                iconClass = 'fas fa-file-archive';
+                                break;
+                            default:
+                                iconClass = 'fas fa-file';
+                                break;
+                        }
+
+
+                        filePreview = `<i class="${iconClass}"></i> ${cleanFileName}`;
+
                         listItem.innerHTML = `
-                    <span>${file}</span>
                     <div>
-                        <button onclick="downloadFile('${file}')">Download</button>
-                        <button onclick="deleteFile('${file}')">Delete</button>
-                        <button onclick="shareFile('${file}')">Share</button>
+                        ${filePreview}
+                    </div>
+                    <div>
+                        <button class="download-btn" onclick="downloadFile('${file}')">Download</button>
+                        <button class="delete-btn" onclick="deleteFile('${file}')">Delete</button>
+                        <button class="share-btn" onclick="shareFile('${file}')">Share</button>
                     </div>
                 `;
+
+
+                        listItem.querySelector('div').addEventListener('click', () => displayPreview(file));
+
+
                         filesList.appendChild(listItem);
                     });
                 } else {
@@ -186,7 +420,48 @@
             }
         }
 
+        function displayPreview(file) {
+            console.log('Test')
+            const authToken = sessionStorage.getItem('authToken');
+            const previewContent = document.getElementById('previewContent');
+            const previewSection = document.getElementById('previewSection');
 
+            previewContent.innerHTML = '';
+
+            const fileExtension = file.split('.').pop().toLowerCase();
+            const fileUrl = `${apiBaseUrl}/download/${file}?token=${authToken}`;
+
+            switch (fileExtension) {
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'webp':
+                    previewContent.innerHTML = `<img src="${fileUrl}" alt="${file}" style="max-width: 100%; max-height: 400px;">`;
+                    break;
+                case 'mp3':
+                case 'wav':
+                case 'ogg':
+                case 'm4a':
+                case 'opus':
+                    previewContent.innerHTML = `<audio controls><source src="${fileUrl}" type="audio/${(fileExtension === 'm4a' || fileExtension === 'opus') ? 'mp4' : fileExtension};
+">Your browser does not support the audio element.</audio>`;
+                    break;
+                case 'mp4':
+                case 'webm':
+                    previewContent.innerHTML = `<video  controls style="max-width: 100%;"><source src="${fileUrl}" type="video/${fileExtension}">Your browser does not support the video element.</video>`;
+                    break;
+                default:
+                    previewContent.innerHTML = `<p>No preview available for this file type.</p>`;
+                    break;
+            }
+
+            previewSection.style.display = 'block';
+        }
+
+        function closePreview() {
+            document.getElementById('previewSection').style.display = 'none';
+        }
 
         async function downloadFile(filename) {
             try {
@@ -232,10 +507,36 @@
                 console.error('Delete error:', error);
                 alert('Error deleting file.');
             }
+            fetchFiles();
+            fetchStorageUsage();
+        }
+
+        function openModal(shareUrl) {
+            const modal = document.getElementById('shareModal');
+            const shareLink = document.getElementById('shareLink');
+            const copyButton = document.getElementById('copyButton');
+
+            shareLink.innerText = shareUrl;
+            shareLink.style.wordWrap = 'break-word';
+
+            copyButton.onclick = () => {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            };
+
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('shareModal').style.display = 'none';
         }
 
         async function shareFile(filename) {
             try {
+                const shareButton = document.querySelector(`button[onclick="shareFile('${filename}')"]`);
+                shareButton.disabled = true;
+
                 const response = await fetch(`${apiBaseUrl}/share/${filename}`, {
                     method: 'POST',
                     headers: {
@@ -245,13 +546,15 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    alert('File shared successfully! Here is the link: ' + result.shareUrl);
+                    openModal(result.shareUrl);
                 } else {
                     alert('Error sharing file.');
                 }
             } catch (error) {
                 console.error('Share error:', error);
                 alert('Error sharing file.');
+            } finally {
+                shareButton.disabled = false;
             }
         }
 
@@ -278,7 +581,7 @@
                 const result = await response.json();
 
                 if (result.storageUsage && result.storageUsage.total && result.storageUsage.limit) {
-                    const storageUsageText = `Used: ${(result.storageUsage.total / (1024 * 1024)).toFixed(2)} MB / ${(result.storageUsage.limit / (1024 * 1024)).toFixed(2)} MB`;
+                    const storageUsageText = `Used: ${findBestUnit(result.storageUsage.total)} / ${result.storageUsage.limit = -1 ? '∞' : findBestUnit(result.storageUsage.limit)}`;
                     document.getElementById('storageUsage').innerText = storageUsageText;
                 }
             } catch (error) {
@@ -287,10 +590,44 @@
             }
         }
 
+        function findBestUnit(bytes) {
+            let dividor = 1024;
+            units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            unitIndex = 0;
+            while (bytes >= dividor && unitIndex < units.length - 1) {
+                bytes /= dividor;
+                unitIndex++;
+            }
+            return `${bytes.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        let isThrottled = false;
+
+        function handleScroll() {
+            if (isThrottled) return;
+
+            isThrottled = true;
+            setTimeout(() => {
+                const previewSection = document.getElementById('previewSection');
+                const rect = previewSection.getBoundingClientRect();
+
+                if (rect.top < 0) {
+                    previewSection.style.position = 'absolute';
+                    previewSection.style.top = `${window.scrollY + 20}px`;
+                } else {
+                    previewSection.style.position = 'absolute';
+                    previewSection.style.top = '20px';
+                }
+
+                isThrottled = false;
+            }, 100);
+        }
+
+        window.addEventListener('scroll', handleScroll);
 
 
         fetchFiles();
-        fetchStorageUsage()
+        fetchStorageUsage();
     </script>
 </body>
 

@@ -338,7 +338,7 @@
             }
         }
         async function downloadBackup(downloadUrl) {
-            const token = sessionStorage.getItem('authToken'); // Fetch token
+            const token = sessionStorage.getItem('authToken');
             if (!token) {
                 alert('Authentication token is missing. Please log in again.');
                 return;

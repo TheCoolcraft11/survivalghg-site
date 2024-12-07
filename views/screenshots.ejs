@@ -21,6 +21,7 @@
             margin-bottom: 30px;
             color: #333;
         }
+
         h1.dark-mode {
             color: #ffffff;
         }
@@ -190,7 +191,6 @@
             color: #f4f4f4;
         }
 
-        /* Add styles for dark mode toggle */
         #darkModeToggle {
             position: fixed;
             top: 80px;
@@ -208,7 +208,8 @@
         #darkModeToggle:hover {
             background-color: #555;
         }
-              .navbar {
+
+        .navbar {
             position: fixed;
             top: 0;
             width: 100%;
@@ -252,7 +253,7 @@
 </head>
 
 <body>
- <nav class="navbar">
+    <nav class="navbar">
         <ul class="nav-left">
             <li><a href="/" class="active">Home</a></li>
             <li><a href="/console.html">Server</a></li>
@@ -288,6 +289,7 @@
             <button id="randomBtn" onclick="randomImage()">Random Image</button>
             <button id="slideshowToggle" onclick="toggleSlideshow()">Start Slideshow</button>
             <input type="number" id="intervalInput" placeholder="Interval (s)" min="1" value="5">
+            <button id="deleteImage" onclick="deleteImage()">Delete Image</button>
         </div>
 
         <div id="thumbnails"></div>
@@ -316,13 +318,13 @@
                 loadImage(src);
                 createThumbnails();
 
-                loading.style.display = 'block'; // Show loading spinner
+                loading.style.display = 'block';
                 modalImg.onload = () => {
-                    loading.style.display = 'none'; // Hide loading spinner
+                    loading.style.display = 'none';
                     modalImg.classList.add('visible');
                 };
 
-                stopSlideshow(); // Ensure slideshow is off when modal opens
+                stopSlideshow();
                 document.addEventListener('keydown', keyNavigation);
             }
 
@@ -338,7 +340,7 @@
             if (event.target === modal || event.target.tagName === 'SPAN') {
                 modal.style.display = 'none';
                 document.getElementById('modalImage').src = '';
-                clearInterval(intervalId); // Stop slideshow
+                clearInterval(intervalId);
                 slideshowActive = false;
                 document.removeEventListener('keydown', keyNavigation);
             }
@@ -365,8 +367,7 @@
 
         function createThumbnails() {
             const thumbnailsContainer = document.getElementById('thumbnails');
-            thumbnailsContainer.innerHTML = ''; // Clear previous thumbnails
-
+            thumbnailsContainer.innerHTML = '';
             images.forEach((src, index) => {
                 const thumb = document.createElement('img');
                 thumb.src = src;
@@ -378,7 +379,7 @@
                 };
                 thumbnailsContainer.appendChild(thumb);
             });
-            highlightThumbnail(currentIndex); // Highlight current thumbnail
+            highlightThumbnail(currentIndex);
         }
 
         function highlightThumbnail(index) {
@@ -389,11 +390,11 @@
         }
 
         function startSlideshow() {
-            if (slideshowActive) return; // Prevent multiple intervals
+            if (slideshowActive) return;
             slideshowActive = true;
 
-            const interval = getInterval(); // Get the interval from the input
-            intervalId = setInterval(nextImage, interval * 1000); // Change image every X seconds
+            const interval = getInterval();
+            intervalId = setInterval(nextImage, interval * 1000);
             document.getElementById('slideshowToggle').textContent = 'Stop Slideshow';
         }
 
@@ -413,7 +414,7 @@
 
         function getInterval() {
             const intervalInput = document.getElementById('intervalInput');
-            return Math.max(Number(intervalInput.value) || 5, 1); // Default to 5 seconds if invalid
+            return Math.max(Number(intervalInput.value) || 5, 1);
         }
 
         function nextImage() {
@@ -459,6 +460,42 @@
             document.body.classList.toggle('dark-mode');
             document.getElementById('header').classList.toggle('dark-mode');
         }
+        function deleteImage() {
+            const imageName = currentSrc.split('/').pop();
+
+            if (confirm(`Are you sure you want to delete the image "${imageName}"?`)) {
+                fetch(`/api/delete-screenshot/${imageName}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Image deleted successfully.');
+                            hideModal({ target: document.getElementById('modal') });
+                            removeImageFromGallery(imageName);
+                        } else {
+                            alert('Failed to delete the image.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the image.');
+                    });
+            }
+        }
+        function removeImageFromGallery(imageName) {
+            const galleryItems = document.querySelectorAll('.gallery img');
+            galleryItems.forEach(img => {
+                if (img.src.includes(imageName)) {
+                    img.parentElement.remove();
+                }
+            });
+        }
+
     </script>
 
 </body>

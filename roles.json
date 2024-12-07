@@ -18,8 +18,10 @@
                 "read",
                 "upload",
                 "delete",
-                "share"
-            ]
+                "share",
+                "delete-screenshot"
+            ],
+            "storageLimit": -1
         },
         "moderator": {
             "description": "Moderators can manage backups, monitor server status, and use the terminal but cannot manage users.",
@@ -50,8 +52,14 @@
             "permissions": [
                 "view_backups",
                 "download_backups",
-                "view_server_status"
-            ]
+                "view_server_status",
+                "view_server_status",
+                "read",
+                "upload",
+                "delete",
+                "share"
+            ],
+            "storageLimit": 1
         },
         "backup_manager": {
             "description": "Role dedicated to managing backups but not controlling the Minecraft server or other users.",
