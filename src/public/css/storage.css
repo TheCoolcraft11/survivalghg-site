@@ -1,0 +1,192 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    overflow: hidden;
+}
+
+header {
+    background-color: #0073e6;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+h1,
+h2 {
+    margin: 0 0 20px;
+}
+
+section {
+    margin-bottom: 40px;
+}
+
+section h2,
+section h3 {
+    text-align: center;
+}
+
+#previewSection {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    grid-column: 2 / 3;
+}
+
+
+.files-section {
+    grid-column: 1 / 2;
+    margin-bottom: 120px;
+}
+
+aside {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    grid-column: 2 / 3;
+}
+
+.file-list,
+#filesList {
+    list-style-type: none;
+    padding: 0;
+}
+
+.file-list li,
+#filesList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.file-list i,
+#filesList i {
+    margin-right: 10px;
+}
+
+button {
+    background-color: #0073e6;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: #005bb5;
+}
+
+button:disabled {
+    background-color: #666;
+}
+
+button:disabled:hover {
+    background-color: #444;
+}
+
+.download-btn {
+    background-color: #0073e6;
+}
+
+.download-btn:hover {
+    background-color: #005bb5;
+}
+
+.delete-btn {
+    background-color: #ff0000;
+}
+
+.delete-btn:hover {
+    background-color: #ac0909;
+}
+
+.share-btn {
+    background-color: #0cad0c;
+}
+
+.share-btn:hover {
+    background-color: #167e16;
+}
+
+#shareModal {
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+#shareModal button {
+    margin: 5px;
+}
+
+#storageUsage {
+    text-align: center;
+}
+
+.upload-section,
+.storage-section {
+    text-align: center;
+}
+
+.upload-section form {
+    display: flex;
+    gap: 10px;
+}
+
+.upload-section input {
+    flex: 1;
+}
+
+#shareModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: center;
+}
+
+#shareModal button {
+    margin: 5px;
+}
+
+#dropZone {
+    border: 2px dashed #0073e6;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+}
+
+#dropZone.dragover {
+    background-color: #f0f8ff;
+    border-color: #005bb5;
+}

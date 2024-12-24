@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "survivalghg-site",
+      "path": "../.."
+    },
+    {
+      "name": "Stundenplan",
+      "path": "../../../Stundenplan"
+    },
+    {
+      "path": "../../../discordBot"
+    }
+  ],
+  "settings": {}
+}

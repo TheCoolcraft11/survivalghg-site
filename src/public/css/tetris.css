@@ -1,0 +1,60 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+#score,
+#level,
+#highscore {
+    font-size: 2em;
+    margin: 5px;
+}
+
+#message {
+    margin: 10px;
+    font-size: 1.5em;
+}
+
+canvas {
+    border: 2px solid #f0f0f0;
+    background-color: #333;
+    display: block;
+    margin-top: 20px;
+    max-width: 100%;
+    max-height: 70vh;
+}
+
+@media (max-width: 768px) {
+
+    #score,
+    #level,
+    #highscore {
+        font-size: 1.5em;
+    }
+
+    #message {
+        font-size: 1.2em;
+    }
+}
+
+@media (max-width: 480px) {
+
+    #score,
+    #level,
+    #highscore {
+        font-size: 1.2em;
+    }
+
+    #message {
+        font-size: 1em;
+    }
+}

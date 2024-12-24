@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Management</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/navbar.css" />
+    <link rel="stylesheet" href="./css/users.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a href="/">Home</a></li>
+          <li><a href="/console">Server</a></li>
+          <li><a href="login">Login</a></li>
+          <li><a href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a  href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a class="active" href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a class="active" href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+
+    <h1>User Management</h1>
+
+    <h2>Add User</h2>
+    <form id="add-user-form" onsubmit="addUser(event)">
+      <label for="name">Name:</label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        required
+        placeholder="Enter name"
+      />
+
+      <label for="role">Role:</label>
+      <select id="role" name="role" required>
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+        <option value="moderator">Moderator</option>
+        <option value="Guest">Guest</option>
+        <option value="Kirill">Kirill</option>
+      </select>
+
+      <label for="password">Password:</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+        placeholder="Enter password"
+      />
+
+      <button type="submit">Add User</button>
+    </form>
+
+    <h2>User List</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body"></tbody>
+    </table>
+    <script src="./js/users.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

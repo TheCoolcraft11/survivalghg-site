@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login and Registration</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/login.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a href="/">Home</a></li>
+          <li><a href="/console">Server</a></li>
+          <li><a class="active" href="login">Login</a></li>
+          <li><a href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a  href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+    <h1 id="form-header">Login</h1>
+
+    <form id="loginForm">
+      <label for="loginUsername">Username:</label>
+      <input type="text" id="loginUsername" name="username" required />
+      <label for="loginPassword">Password:</label>
+      <input type="password" id="loginPassword" name="password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <form id="registerForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required />
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+      <label for="role">Role:</label>
+      <select id="role" name="role" required>
+        <option value="user">User</option>
+        <option value="user">Admin</option>
+      </select>
+      <button type="submit">Register</button>
+    </form>
+
+    <button class="toggle-button" id="toggleButton">
+      Don't have an account? Register here
+    </button>
+
+    <script src="./js/login.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

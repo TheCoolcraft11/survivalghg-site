@@ -1,7 +1,5 @@
-.env
 logs/
 uploads/
-
-logs/890ce122c01e791fef19f63e26ec00d66485527ee16d54e283ccec61d13ae1a8.json
-logs/Max.json
-logs/Guest.json
+data/
+src/.env
+node_modules/

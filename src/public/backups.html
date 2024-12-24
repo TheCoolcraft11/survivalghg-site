@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backup List</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/backup.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a href="/">Home</a></li>
+          <li><a class="active" href="/console">Server</a></li>
+          <li><a href="login">Login</a></li>
+          <li><a href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+
+    <h1>Backup List</h1>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search backups..." />
+      <select id="sort">
+        <option value="name">Sort by Name</option>
+        <option value="size">Sort by Size</option>
+        <option value="date">Sort by Date</option>
+      </select>
+    </div>
+    <div id="backup-list">
+      <p>Loading...</p>
+    </div>
+
+    <div id="delete-modal" class="modal">
+      <div class="modal-content">
+        <h3>Confirm Delete</h3>
+        <p>
+          Are you sure you want to delete
+          <strong id="delete-filename"></strong>?
+        </p>
+        <div class="modal-actions">
+          <button id="cancel-delete" class="cancel-btn">Cancel</button>
+          <button id="confirm-delete" class="confirm-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+    <script src="./js/backups.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error <%= errorCode %></title>
+    <link rel="stylesheet" href="./css/404.css">
+</head>
+
+<body>
+    <div class="stars"></div>
+
+    <div class="earth"></div>
+
+    <h1><%= errorCode %></h1>
+
+    <div class="message"><%- errorMessage %></div>
+
+    <div class="button-container">
+        <a href="/" class="btn">Take Me Home</a>
+        <a href="javascript:void(0);" id="goBackButton" class="btn">Go Back in Time!</a>
+    </div>
+
+    <script>
+        document.getElementById('goBackButton').addEventListener('click', function () {
+            document.body.classList.add('time-traveling');
+            document.body.classList.add('background-fade');
+
+            setTimeout(function () {
+                window.history.back();
+            }, 3000);
+        });
+    </script>
+</body>
+
+</html>

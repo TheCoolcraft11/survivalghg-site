@@ -1,0 +1,53 @@
+#reconnectButton {
+    margin-top: 10px;
+    padding: 10px 15px;
+    margin: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#reconnectButton:hover {
+    background-color: #45a049;
+}
+
+#unauthorized-message {
+    display: none;
+    width: 80%;
+    padding: 20px;
+    margin-top: 20px;
+    border: 2px solid #ff4d4d;
+    border-radius: 10px;
+    background-color: #fffbe6;
+    color: #d9534f;
+    text-align: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+#terminal {
+    margin-top: 60px;
+    border: 2px solid #4db1ff;
+    border-radius: 15px;
+    overflow: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background-color: #fff;
+}
+
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('/images/bg.webp');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

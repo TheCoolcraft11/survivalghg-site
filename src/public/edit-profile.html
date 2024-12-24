@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Edit Profile</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/edit-profile.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <div class="profile-container">
+      <div class="profile-pic-container">
+        <img
+          id="profilePic"
+          class="profile-pic"
+          src="/uploads/profile-pictures/default.jpg"
+          alt="Profile Picture"
+        />
+      </div>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <label for="profilePicture" class="custom-upload-btn"
+          >Upload New Profile Picture</label
+        >
+        <input
+          type="file"
+          id="profilePicture"
+          name="profilePicture"
+          accept="image/*"
+        />
+        <button type="submit" class="custom-upload-btn">Upload</button>
+      </form>
+
+      <form id="changeNameForm" class="form-style">
+        <h3>Change Name</h3>
+        <label for="name">New Name:</label>
+        <input type="text" id="name" name="name" placeholder="Enter new name" />
+        <button type="submit">Update Name</button>
+      </form>
+
+      <form id="changePasswordForm" class="form-style">
+        <h3>Change Password</h3>
+        <label for="password">New Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter new password"
+        />
+        <label for="confirmPassword">Confirm Password:</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          placeholder="Confirm new password"
+        />
+        <button type="submit">Update Password</button>
+      </form>
+    </div>
+    <div class="profile-actions">
+      <button class="back">Back</button>
+    </div>
+
+    <script src="./js/edit-profile.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/profile.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a href="/">Home</a></li>
+          <li><a href="/console">Server</a></li>
+          <li><a href="login">Login</a></li>
+          <li><a class="active" href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a  href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+    <div class="profile-container">
+      <div class="profile-header">
+        <h1>My Profile</h1>
+        <img
+          id="profile_picture"
+          src="https://via.placeholder.com/120"
+          alt="Profile Avatar"
+          class="profile-avatar"
+        />
+      </div>
+
+      <div class="profile-info">
+        <p><span>Name: </span><span id="name"></span></p>
+        <p><span>Role: </span><span id="role"></span></p>
+      </div>
+
+      <div class="profile-actions">
+        <button>Edit Profile</button>
+        <button class="logout">Logout</button>
+      </div>
+    </div>
+
+    <script src="./js/profile.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

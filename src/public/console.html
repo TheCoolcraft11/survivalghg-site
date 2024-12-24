@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<noscript>You need to enabled java script in order to run this site</noscript>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="fullscreen=*">
+    <title>Console</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/console.css">
+    <link rel="stylesheet" href="./css/navbar.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a class="active" href="/console">Server</a></li>
+            <li><a href="login">Login</a></li>
+            <li><a href="profile">Profile</a></li>
+            <li class="dropdown" id="moreDropdown">
+                <a  href="#">More</a>
+                <div class="dropdown-content">
+                    <a href="storage">Storage</a>
+                    <a href="tetris">Tetris</a>
+                    <a href="cards">Cards</a>
+                    <a href="screenshots">Screenshots</a>
+                    <a href="about">About</a>
+                </div>
+            </li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal">Linux</a>
+                    <a href="users">Users</a>
+                    <a href="404">None</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div>
+        <div class="console" id="console"></div>
+        <div>
+            <form onsubmit="sendCommand(event)">
+                <input type="text" name="command" autocomplete="off" placeholder="/ Enter Command" required
+                    class="command-label" />
+            </form>
+            <div class="button-container">
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-start"
+                        class="btn btn-animate btn-start">Start</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-restart"
+                        class="btn btn-animate btn-restart">Restart</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-stop"
+                        class="btn btn-animate btn-stop">Stop</a>
+                </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-kill"
+                        class="btn btn-animate btn-kill">Kill</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <h3 class="server-links" onclick="hideActions()" style="display: block;" id="serverText">Server Actions</h3>
+    <div class="server-links" style="display: none;" id="serverLinks">
+        <h3 onclick="hideActions()">Server Actions</h3>
+        <ul>
+            <li><button class="backup-btn links-btn" onclick="backups()">Backups</button></li>
+            <div class="filter-container">
+                Messages</label>
+                <div style="position: relative;">
+                    <button class="filter-button" id="filter-toggle-button">Filters</button>
+                    <div class="filter-content" id="filter-dropdown">
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-joinorleft" class="filter-checkbox" value="joinorleft" checked>Join Or
+                            Left</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-cmdexec" class="filter-checkbox" value="cmdexec" checked> Command
+                            Executions</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-deathmsg" class="filter-checkbox" value="deathmsg" checked> Death
+                            Messages</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-warn" class="filter-checkbox" value="warn" checked> Warnings</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-error" class="filter-checkbox" value="error" checked><br> Errors</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-info" class="filter-checkbox" value="info" checked> Information</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-chatmsg" class="filter-checkbox" value="chatmsg" checked> <br>Chat</label>
+                        <label class="filter-label"><input type="checkbox" onclick="addFilter(this.value, this.checked)"
+                                id="filter-other" class="filter-checkbox" value="other" checked> <br>Other</label>
+                    </div>
+                </div>
+            </div>
+        </ul>
+    </div>
+    </div>
+
+    <div class="server-actions" id="customMenu">
+        <button class="actions-btn" onclick="jumpToMessage(clickedElement)">Jump To Message</button>
+        <button class="actions-btn" onclick="hideMessageType()">Hide Message Type</button>
+        <button class="actions-btn" onclick="hideText()">Hide this Text</button>
+        <button class="actions-btn" onclick="downloadLog()">Download Log</button>
+    </div>
+
+</body>
+
+</html>
+<script src="./js/console.js"></script>
+<script src="./js/navbar.js"></script>
+</body>
+
+</html>

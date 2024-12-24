@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="widgets/css/widgets.css" />
+    <link rel="stylesheet" href="./css/index.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a class="active" href="/">Home</a></li>
+          <li><a href="/console">Server</a></li>
+          <li><a href="login">Login</a></li>
+          <li><a href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a  href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+
+    <div class="wrapper">
+      <div class="grid-container" id="grid-container">
+        <div
+          class="field"
+          id="field1"
+          onclick="showFloatingUI(event, 'field1')"
+        >
+          Field 1
+        </div>
+        <div
+          class="field"
+          id="field2"
+          onclick="showFloatingUI(event, 'field2')"
+        >
+          Field 2
+        </div>
+        <div
+          class="field"
+          id="field3"
+          onclick="showFloatingUI(event, 'field3')"
+        >
+          Field 3
+        </div>
+        <div
+          class="field"
+          id="field4"
+          onclick="showFloatingUI(event, 'field4')"
+        >
+          Field 4
+        </div>
+        <div
+          class="field"
+          id="field5"
+          onclick="showFloatingUI(event, 'field5')"
+        >
+          Field 5
+        </div>
+        <div
+          class="field"
+          id="field6"
+          onclick="showFloatingUI(event, 'field6')"
+        >
+          Field 6
+        </div>
+        <div
+          class="field"
+          id="field7"
+          onclick="showFloatingUI(event, 'field7')"
+        >
+          Field 7
+        </div>
+        <div
+          class="field"
+          id="field8"
+          onclick="showFloatingUI(event, 'field8')"
+        >
+          Field 8
+        </div>
+        <div
+          class="field"
+          id="field9"
+          onclick="showFloatingUI(event, 'field9')"
+        >
+          Field 9
+        </div>
+        <div
+          class="field"
+          id="field10"
+          onclick="showFloatingUI(event, 'field10')"
+        >
+          Field 10
+        </div>
+        <div
+          class="field"
+          id="field11"
+          onclick="showFloatingUI(event, 'field11')"
+        >
+          Field 11
+        </div>
+        <div
+          class="field"
+          id="field12"
+          onclick="showFloatingUI(event, 'field12')"
+        >
+          Field 12
+        </div>
+        <div
+          class="field"
+          id="field13"
+          onclick="showFloatingUI(event, 'field13')"
+        >
+          Field 13
+        </div>
+        <div
+          class="field"
+          id="field14"
+          onclick="showFloatingUI(event, 'field14')"
+        >
+          Field 14
+        </div>
+      </div>
+    </div>
+
+    <div id="floatingUI" class="floating-ui">
+      <p>Select a widget:</p>
+      <button onclick="selectWidget(0)">Empty Widget</button>
+    </div>
+
+    <div class="button-container" style="display: none">
+      <button onclick="exportToJSON()">Save Configuration</button>
+      <button onclick="exportToJSON(true)">Delete Configuration</button>
+    </div>
+    <button onclick="toggleButtons(true)" class="toggle-btn">Edit</button>
+
+    <script src="./js/index.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>

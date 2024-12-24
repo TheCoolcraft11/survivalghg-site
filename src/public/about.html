@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>About me</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./css/about.css">
+    <link rel="stylesheet" href="./css/navbar.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a href="/console">Server</a></li>
+            <li><a href="login">Login</a></li>
+            <li><a href="profile">Profile</a></li>
+            <li class="dropdown" id="moreDropdown">
+                <a class="active" href="#">More</a>
+                <div class="dropdown-content">
+                    <a href="storage">Storage</a>
+                    <a href="tetris">Tetris</a>
+                    <a href="cards">Cards</a>
+                    <a href="screenshots">Screenshots</a>
+                    <a class="active" href="about">About</a>
+                </div>
+            </li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal">Linux</a>
+                    <a href="users">Users</a>
+                    <a href="404">None</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-img-container">
+                <img src="./images/avatar.webp" alt="Profile Image" class="profile-img">
+            </div>
+            <h1 class="profile-name">Max</h1>
+            <p class="profile-job-title">Schüler der 8. Klasse</p>
+        </div>
+
+        <div class="bio">
+            <h2 class="section-title">Über Mich</h2>
+            <p>Ich bin ein Schüler in der 8. Klasse und interessiere mich sehr für IT und Programmierung. Ich lerne
+                derzeit Java und habe auch schon meine eigenen Minecraft Plugins / Mods für Minecraft in Java erstellt.
+                In meiner Freizeit programmiere ich und lerne durch Projekte, um mehr über Technologie zu erfahren.
+                Ich habe auch schon Erfahrung mit HTML, CSS und Javascript gesammelt. 
+            </p>
+        </div>
+
+        <div class="skills">
+            <h2 class="section-title">Meine Fähigkeiten</h2>
+            <div class="skills-list">
+                <div class="skill-item">Java</div>
+                <div class="skill-item">HTML</div>
+                <div class="skill-item">CSS</div>
+                <div class="skill-item">Javascript</div>
+            </div>
+        </div>
+
+        <div class="social-links">
+            <a href="https://discordapp.com/users/1063115747007660192" class="social-btn discord"><i
+                    class="fab fa-discord"></i></a>
+            <a href="https://github.com/thecoolcraft11" class="social-btn github"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+    <script src="./js/navbar.js"></script>
+</body>
+
+</html>

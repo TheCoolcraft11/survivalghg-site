@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pick a Card</title>
+    <link rel="icon" href="./images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./css/cards.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <ul class="nav-left">
+          <li><a href="/">Home</a></li>
+          <li><a href="/console">Server</a></li>
+          <li><a href="login">Login</a></li>
+          <li><a href="profile">Profile</a></li>
+          <li class="dropdown" id="moreDropdown">
+              <a class="active" href="#">More</a>
+              <div class="dropdown-content">
+                  <a href="storage">Storage</a>
+                  <a href="tetris">Tetris</a>
+                  <a class="active" href="cards">Cards</a>
+                  <a href="screenshots">Screenshots</a>
+                  <a href="about">About</a>
+              </div>
+          </li>
+          <li class="dropdown" id="adminDropdown" style="display: none;">
+              <a href="#">Admin Tools</a>
+              <div class="dropdown-content">
+                  <a href="terminal">Linux</a>
+                  <a href="users">Users</a>
+                  <a href="404">None</a>
+              </div>
+          </li>
+      </ul>
+  </nav>
+
+    <div class="cards-container" id="cards-container"></div>
+
+    <form id="cardForm">
+      <input
+        type="number"
+        id="setSize"
+        placeholder="Number of Cards"
+        required
+        value="10"
+        min="1"
+      />
+
+      <label for="setAll">
+        <input type="checkbox" id="setAll" /> Set one image/color for all cards
+      </label>
+
+      <input type="file" id="cardImages" accept="image/*" multiple />
+      <button type="submit">Add Set of Cards</button>
+    </form>
+    <button
+      type="random"
+      onclick="addRandom(document.getElementById('setSize').value || 10)"
+    >
+      Random Cards
+    </button>
+
+    <button onclick="pickCard()">Pick a Card</button>
+
+    <script src="./js/cards.js"></script>
+    <script src="./js/navbar.js"></script>
+  </body>
+</html>
