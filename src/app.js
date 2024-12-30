@@ -4,12 +4,14 @@ const fs = require("fs");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
-
+const ngrok = require("@ngrok/ngrok");
+const http = require("http");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const minecraftRoutes = require("./routes/minecraftRoutes");
 const screenshotRoutes = require("./routes/screenshotRoutes");
 const storagerRoutes = require("./routes/storagerRoutes");
 const systemRoutes = require("./routes/systemRoutes");
+const setupWebsocket = require("./websocket/systemWebsocket");
 const tetrisRoutes = require("./routes/tetrisRoutes");
 const userRoutes = require("./routes/userRoutes");
 const {
@@ -23,17 +25,23 @@ const initWebSocket = require("./websocket/consoleWebsocket");
 
 const app = express();
 const wsServer = new WebSocket.Server({ port: 8080 });
+const wsServer2 = new WebSocket.Server({ port: 8081 });
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 
 app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 1000,
   keyGenerator: (req) => {
-    return req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+    return req.ip || req.headers["x-forwarded-for"];
   },
 });
 
@@ -53,6 +61,10 @@ app.use("/css", express.static(path.join(__dirname, "public", "css")));
 app.use("/js", express.static(path.join(__dirname, "public", "js")));
 
 app.set("trust proxy", "loopback");
+
+app.get("/test", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "test.html"));
+});
 
 app.get("/404", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "404.html"));
@@ -189,7 +201,16 @@ app.use((err, req, res) => {
 });
 
 initWebSocket(wsServer);
+setupWebsocket(wsServer2);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+ngrok
+  .connect({
+    addr: 80,
+    authtoken: process.env.NGROK_AUTHTOKEN,
+    domain: process.env.NGROK_DOMAIN,
+  })
+  .then((listener) => console.log(`Ingress established at: ${listener.url()}`));

@@ -20,7 +20,7 @@
             <li><a href="login">Login</a></li>
             <li><a href="profile">Profile</a></li>
             <li class="dropdown" id="moreDropdown">
-                <a  href="#">More</a>
+                <a href="#">More</a>
                 <div class="dropdown-content">
                     <a href="storage">Storage</a>
                     <a href="tetris">Tetris</a>
@@ -64,9 +64,14 @@
                     <a href="#" onclick="return false;" type="button" id="btn-kill"
                         class="btn btn-animate btn-kill">Kill</a>
                 </div>
+                <div class="text-box">
+                    <a href="#" onclick="return false;" type="button" id="btn-settings"
+                        class="btn btn-animate btn-settings">Settings</a>
+                </div>
 
             </div>
         </div>
+    </div>
     </div>
     <h3 class="server-links" onclick="hideActions()" style="display: block;" id="serverText">Server Actions</h3>
     <div class="server-links" style="display: none;" id="serverLinks">
@@ -110,6 +115,13 @@
         <button class="actions-btn" onclick="hideText()">Hide this Text</button>
         <button class="actions-btn" onclick="downloadLog()">Download Log</button>
     </div>
+
+    <div id="settingsMenu" class="settings-menu">
+        <h1>Settings</h1>
+        <div class="settings-container">
+            <label for="messageLimit">Message Limit:</label>
+            <input type="text" id="messageLimit" name="messageLimit" value=1000>
+        </div>
 
 </body>
 

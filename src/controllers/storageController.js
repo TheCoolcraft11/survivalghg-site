@@ -56,7 +56,7 @@ function cleanupExpiredEntries() {
   }
 }
 
-setInterval(cleanupExpiredEntries, 60 * 60 * 1000);
+setInterval(cleanupExpiredEntries, 1000 * 60 * 60);
 
 exports.uploadFiles = (req, res) => {
   const userRole = req.user.role;
@@ -217,10 +217,14 @@ exports.shareFile = async (req, res) => {
     sharedFiles[decodedFilename] = [];
   }
 
+  const expiryTime = req.body.expiryTime
+    ? Date.now() + req.body.expiryTime
+    : null;
+
   sharedFiles[decodedFilename].push({
     token: shareToken,
     sharedBy: req.user.id,
-    sharedAt: Date.now(),
+    expiryTime: expiryTime,
     password: hashedPassword,
   });
 
@@ -255,6 +259,7 @@ exports.getSharedFile = async (req, res) => {
   }
 
   if (shareEntry.expiryTime && Date.now() > shareEntry.expiryTime) {
+    cleanupExpiredEntries();
     return res.status(410).json({ message: "Share token has expired" });
   }
 
@@ -284,7 +289,6 @@ exports.getSharedFile = async (req, res) => {
   console.log(filePath);
   res.sendFile(filePath);
 };
-
 exports.getSharedInfo = async (req, res) => {
   const { filename, token } = req.params;
 
@@ -306,7 +310,6 @@ exports.getSharedInfo = async (req, res) => {
     ? new Date(shareEntry.expiryTime).toLocaleString()
     : "No expiry";
 
-  const sharedAt = new Date(shareEntry.sharedAt).toLocaleString();
   const sharedBy = shareEntry.sharedBy;
 
   const userData = await getUserData(sharedBy);
@@ -374,9 +377,6 @@ exports.getSharedInfo = async (req, res) => {
             </div>
             <div class="info">
                 <label>Shared By User:</label><img class="user-picture" src=${userData.profile_picture}> <span>${userData.username}</span>
-            </div>
-            <div class="info">
-                <label>Shared At:</label> <span>${sharedAt}</span>
             </div>
             <div class="info">
                 <label>Available Until:</label> <span>${expiryTime}</span>

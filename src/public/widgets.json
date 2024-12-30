@@ -1,123 +1,118 @@
 [
-    {
-        "id": 0,
-        "title": "Empty",
-        "js": "./widgets/js/empty.js",
-        "html": "./widgets/html/empty.html",
-        "dontShow": true
-    },
-    {
-        "id": 1,
-        "title": "Time",
-        "js": "./widgets/js/time.js",
-        "html": "./widgets/html/time.html",
-        "color": "#4682b4",
-        "accentColor": "#ffcc00"
-    },
-    {
-        "id": 2,
-        "title": "Weather",
-        "js": "./widgets/js/weather.js",
-        "html": "./widgets/html/weather.html",
-        "color": "#4caf50",
-        "accentColor": "#ffcc00"
-    },
-    {
-        "id": 3,
-        "title": "Note",
-        "js": "./widgets/js/note.js",
-        "html": "./widgets/html/note.html",
-        "savable": {
-            "noteWidget-note": "markdownField"
-        }
-    },
-    {
-        "id": 4,
-        "title": "Calender",
-        "js": "./widgets/js/calender.js",
-        "html": "./widgets/html/calender.html"
-    },
-    {
-        "id": 5,
-        "title": "Password",
-        "js": "./widgets/js/password.js",
-        "html": "./widgets/html/password.html",
-        "savable": {
-            "passwordWidget-password": "password"
-        }
-    },
-    {
-        "id": 6,
-        "title": "Process",
-        "js": "./widgets/js/process.js",
-        "html": "./widgets/html/process.html"
-    },
-    {
-        "id": 7,
-        "title": "CPU",
-        "js": "./widgets/js/cpu.js",
-        "html": "./widgets/html/cpu.html"
-    },
-    {
-        "id": 8,
-        "title": "Memory",
-        "js": "./widgets/js/memory.js",
-        "html": "./widgets/html/memory.html",
-        "additionals": {
-            "js": [
-                "./widgets/js/helper.js"
-            ]
-        }
-    },
-    {
-        "id": 9,
-        "title": "Disk",
-        "js": "./widgets/js/disk.js",
-        "html": "./widgets/html/disk.html",
-        "additionals": {
-            "js": [
-                "./widgets/js/helper.js"
-            ]
-        }
-    },
-    {
-        "id": 10,
-        "title": "Network",
-        "js": "./widgets/js/network.js",
-        "html": "./widgets/html/network.html",
-        "additionals": {
-            "js": [
-                "./widgets/js/helper.js"
-            ]
-        }
-    },
-    {
-        "id": 11,
-        "title": "Random",
-        "js": "./widgets/js/random.js",
-        "html": "./widgets/html/random.html"
-    },
-    {
-        "id": 12,
-        "title": "QR Code",
-        "js": "./widgets/js/qrcode.js",
-        "html": "./widgets/html/qrcode.html",
-        "additionals": {
-            "js": [
-                "https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"
-            ]
-        }
-    },
-    {
-        "id": 13,
-        "title": "Console",
-        "js": "./widgets/js/console.js",
-        "html": "./widgets/html/console.html"
-    },
-    {
-        "id": 14,
-        "title": "Hello",
-        "js": "./widgets/js/profile.js",
-        "html": "./widgets/html/profile.html"
+  {
+    "id": 0,
+    "title": "Empty",
+    "js": "./widgets/js/empty.js",
+    "html": "./widgets/html/empty.html",
+    "dontShow": true
+  },
+  {
+    "id": 1,
+    "title": "Time",
+    "js": "./widgets/js/time.js",
+    "html": "./widgets/html/time.html",
+    "color": "#4682b4",
+    "accentColor": "#ffcc00"
+  },
+  {
+    "id": 2,
+    "title": "Weather",
+    "js": "./widgets/js/weather.js",
+    "html": "./widgets/html/weather.html",
+    "color": "#4caf50",
+    "accentColor": "#ffcc00"
+  },
+  {
+    "id": 3,
+    "title": "Note",
+    "js": "./widgets/js/note.js",
+    "html": "./widgets/html/note.html",
+    "savable": {
+      "noteWidget-note": "markdownField"
     }
+  },
+  {
+    "id": 4,
+    "title": "Calender",
+    "js": "./widgets/js/calender.js",
+    "html": "./widgets/html/calender.html"
+  },
+  {
+    "id": 5,
+    "title": "Password",
+    "js": "./widgets/js/password.js",
+    "html": "./widgets/html/password.html",
+    "savable": {
+      "passwordWidget-password": "password"
+    }
+  },
+  {
+    "id": 6,
+    "title": "Process",
+    "js": "./widgets/js/process.js",
+    "html": "./widgets/html/process.html"
+  },
+  {
+    "id": 7,
+    "title": "CPU",
+    "js": "./widgets/js/cpu.js",
+    "html": "./widgets/html/cpu.html",
+    "additionals": {
+      "js": ["./widgets/js/systemHelper.js"]
+    }
+  },
+  {
+    "id": 8,
+    "title": "Memory",
+    "js": "./widgets/js/memory.js",
+    "html": "./widgets/html/memory.html",
+    "additionals": {
+      "js": ["./widgets/js/systemHelper.js", "./widgets/js/helper.js"]
+    }
+  },
+  {
+    "id": 9,
+    "title": "Disk",
+    "js": "./widgets/js/disk.js",
+    "html": "./widgets/html/disk.html",
+    "additionals": {
+      "js": ["./widgets/js/systemHelper.js", "./widgets/js/helper.js"]
+    }
+  },
+  {
+    "id": 10,
+    "title": "Network",
+    "js": "./widgets/js/network.js",
+    "html": "./widgets/html/network.html",
+    "additionals": {
+      "js": ["./widgets/js/systemHelper.js", "./widgets/js/helper.js"]
+    }
+  },
+  {
+    "id": 11,
+    "title": "Random",
+    "js": "./widgets/js/random.js",
+    "html": "./widgets/html/random.html"
+  },
+  {
+    "id": 12,
+    "title": "QR Code",
+    "js": "./widgets/js/qrcode.js",
+    "html": "./widgets/html/qrcode.html",
+    "additionals": {
+      "js": ["https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"]
+    }
+  },
+  {
+    "id": 13,
+    "title": "Console",
+    "js": "./widgets/js/console.js",
+    "html": "./widgets/html/console.html"
+  },
+  {
+    "id": 14,
+    "title": "Hello",
+    "js": "./widgets/js/profile.js",
+    "html": "./widgets/html/profile.html"
+  }
 ]

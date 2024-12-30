@@ -181,7 +181,6 @@ function applyGradientToText(colors) {
           .map((color) => `rgb(${color})`)
           .join(", ")})`
       : `linear-gradient(45deg, rgb(${colors[0]}), rgb(${colors[0]}))`;
-  console.log(gradient);
   const userNameElement = document.getElementById("user_name");
   userNameElement.style.background = gradient;
   userNameElement.style.backgroundClip = "text";
@@ -191,7 +190,6 @@ function applyGradientToText(colors) {
 }
 
 function displayColors(colors) {
-  console.log(colors);
   const card = document.getElementById("widget_14");
   card.style.setProperty("--widget-bg-color", `rgb(${colors[0]})`);
 }

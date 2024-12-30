@@ -313,7 +313,6 @@ async function loadFromJSON() {
     const result = await response.json();
     if (response.ok) {
       const jsonData = result[0]?.dashboard_layout;
-      console.log(jsonData);
       let widgetJSON;
 
       if (typeof jsonData === "string") {
@@ -334,7 +333,6 @@ async function loadFromJSON() {
         widgetJSON.forEach((widgetData) => {
           const field = document.getElementById(widgetData.fieldId);
           if (field) {
-            console.log(widgetData.widgetId, typeof widgetData.widgetId);
             if (
               widgetData.widgetId &&
               typeof widgetData.widgetId === "string"

@@ -1,4 +1,5 @@
 const token = sessionStorage.getItem("authToken");
+let stopBackupCheck = false;
 
 function hideMessageType() {
   addFilter(clickedElement.dataset.type, false);
@@ -286,28 +287,35 @@ const iframe = document.getElementById("bluemap-iframe");
 let wasMakingBackup = false;
 function checkBackupStatus() {
   displayBackup();
-  setInterval(displayBackup, 151100);
+  setInterval(displayBackup, 1500);
 }
 
 function displayBackup() {
-  fetch("/api/backups/status", {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const consoleElement = document.getElementById("console");
-      const commandInput = document.querySelector('input[name="command"]');
-      if (data.progress && data.progress !== "100%" && data.progress != "N/A") {
-        isBackup = true;
-        progress = data.progress.replace("%", "");
-        totalsize =
-          ((formatString(data.size, true) / progress) * 100 * 0.75).toFixed(2) +
-          " " +
-          formatString(data.size, false);
-        commandInput.disabled = true;
-        consoleElement.innerHTML = `
+  if (!stopBackupCheck) {
+    fetch("/api/backups/status", {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const consoleElement = document.getElementById("console");
+        const commandInput = document.querySelector('input[name="command"]');
+        if (
+          data.progress &&
+          data.progress !== "100%" &&
+          data.progress != "N/A"
+        ) {
+          isBackup = true;
+          progress = data.progress.replace("%", "");
+          totalsize =
+            ((formatString(data.size, true) / progress) * 100 * 0.75).toFixed(
+              2
+            ) +
+            " " +
+            formatString(data.size, false);
+          commandInput.disabled = true;
+          consoleElement.innerHTML = `
                     <div class="backupStatus" id="backupStatus">
                         <div class="backup-header">
                             <p class="creatingBackup">Creating Backup...</p>
@@ -330,24 +338,25 @@ function displayBackup() {
                         <p>I dont know what could be here</p>
                     </div>
                     `;
-        wasMakingBackup = true;
-      } else if (data.progress === "100%") {
-        consoleElement.innerHTML = "<p>Backup erfolgreich abgeschlossen!</p>";
-        wasMakingBackup = true;
-      } else {
-        isBackup = false;
-        if (wasMakingBackup) {
-          consoleElement.innerHTML = "";
-          wasMakingBackup = false;
-          commandInput.disabled = false;
+          wasMakingBackup = true;
+        } else if (data.progress === "100%") {
+          consoleElement.innerHTML = "<p>Backup erfolgreich abgeschlossen!</p>";
+          wasMakingBackup = true;
+        } else {
+          isBackup = false;
+          if (wasMakingBackup) {
+            consoleElement.innerHTML = "";
+            wasMakingBackup = false;
+            commandInput.disabled = false;
 
-          setTimeout(connectWebSocket(), 1500);
+            setTimeout(connectWebSocket(), 1500);
+          }
         }
-      }
-    })
-    .catch((err) => {
-      console.error("Fehler beim Abrufen des Backup-Status:", err);
-    });
+      })
+      .catch((err) => {
+        console.error("Fehler beim Abrufen des Backup-Status:", err);
+      });
+  }
 }
 
 function formatString(input, numbers) {
@@ -409,16 +418,16 @@ let filterTypes = [
   "chatmsg",
   "other",
 ];
-let limit = 1000;
+let limit = localStorage.getItem("messageLimit") || 1000;
 
 function connectWebSocket() {
   socket = new WebSocket(
-    "ws://" +
-      window.location.origin.replace("http://", "") +
-      "/ws1" +
-      "?limit=" +
-      limit
+    window.location.origin.replace("http", "ws") + "/ws1" + "?limit=" + limit
   );
+
+  socket.onopen = () => {
+    stopBackupCheck = true;
+  };
 
   socket.onmessage = async function (event) {
     if (!isBackup) {
@@ -478,6 +487,7 @@ function connectWebSocket() {
   };
 
   socket.onclose = function () {
+    stopBackupCheck = true;
     console.log("WebSocket connection closed. Reconnecting in 1 second...");
     setTimeout(connectWebSocket, 1000);
   };
@@ -639,4 +649,42 @@ function downloadLog() {
   downloadLink.href = URL.createObjectURL(blob);
   downloadLink.download = "console.txt";
   downloadLink.click();
+}
+
+document.getElementById("btn-settings").addEventListener("click", (e) => {
+  e.preventDefault();
+  toggleSettingsMenu();
+});
+
+function toggleSettingsMenu() {
+  const settingsMenu = document.getElementById("settingsMenu");
+  if (settingsMenu.classList.contains("show")) {
+    settingsMenu.classList.remove("show");
+    setTimeout(() => {
+      settingsMenu.style.display = "none";
+    }, 500);
+  } else {
+    settingsMenu.style.display = "block";
+    setTimeout(() => {
+      loadSettings();
+      settingsMenu.classList.add("show");
+    }, 10);
+  }
+}
+
+addSettingsListener();
+
+function loadSettings() {
+  document.querySelector('input[name="messageLimit"]').value =
+    localStorage.getItem("messageLimit") || 1000;
+}
+
+function addSettingsListener() {
+  document
+    .querySelector('input[name="messageLimit"]')
+    .addEventListener("input", (e) => {
+      localStorage.setItem("messageLimit", e.target.value);
+      limit = e.target.value;
+      connectWebSocket();
+    });
 }
