@@ -51,13 +51,21 @@
       />
 
       <label for="role">Role:</label>
-      <select id="role" name="role" required>
+      <select id="role" name="role" required onchange="toggleCustomRoleField()">
         <option value="admin">Admin</option>
         <option value="user">User</option>
         <option value="moderator">Moderator</option>
         <option value="Guest">Guest</option>
-        <option value="Kirill">Kirill</option>
+        <option value="member">Member</option>
+        <option value="other">Other</option>
       </select>
+      <input
+        type="text"
+        id="custom-role"
+        name="custom-role"
+        placeholder="Enter custom role"
+        style="display: none;"
+      />
 
       <label for="password">Password:</label>
       <input

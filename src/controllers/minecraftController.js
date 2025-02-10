@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const net = require('net');
 const screenSessionName = 'SurvivalGHG';
+const { queryServer } = require('../services/minecraftQuery');
 
 exports.startMcServer = (req, res) => {
     isMinecraftServerRunning(isRunning => {
@@ -240,3 +241,7 @@ function isMinecraftServerRunning(callback) {
     socket.connect(port, host);
 
 }
+
+exports.getServerQuery = async (req, res) => {
+    res.json(await queryServer('localhost', 25566));
+};

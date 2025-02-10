@@ -32,7 +32,7 @@ document.querySelector(".logout").addEventListener("click", () => {
 });
 
 document.querySelector("button").addEventListener("click", () => {
-  window.location.href = "/edit-profile.html";
+  window.location.href = "/edit-profile";
 });
 function getProfile() {
   const token = sessionStorage.getItem("authToken");

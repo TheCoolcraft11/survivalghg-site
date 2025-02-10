@@ -688,3 +688,74 @@ function addSettingsListener() {
       connectWebSocket();
     });
 }
+
+document.getElementById('toggle-widget').addEventListener('click', function () {
+  const serverWidget = document.getElementById('server-widget');
+  const consoleElement = document.querySelector('.console');
+
+  if (serverWidget.classList.contains('hidden')) {
+      serverWidget.classList.remove('hidden');
+      serverWidget.classList.add('show');
+      setTimeout(() => {
+        serverWidget.classList.remove('show');
+      }, 300);
+      consoleElement.style.marginTop = '225px';
+      consoleElement.style.height = 'calc(75vh - 250px)';
+      consoleElement.style.minHeight = 'calc(75vh - 250px)';
+  } else {
+      serverWidget.classList.add('hidden');
+      consoleElement.style.marginTop = '0px';
+      consoleElement.style.height = '75vh';
+      consoleElement.style.minHeight = '75vh';
+  }
+});
+
+async function fetchServerData() {
+  try {
+      const response = await fetch('/api/query');
+      const data = await response.json();
+      document.getElementById('server-description').textContent = `A Minecraft Server`;
+      document.getElementById('status-badge').textContent = data.error ? '❌ Offline' : '✔ Online';
+      document.getElementById('status-badge').style.color = data.error ? '#ff4b4b' : '#00ff9d';
+      document.getElementById('status-badge').style.background = data.error
+          ? 'rgba(255,75,75,0.15)'
+          : 'rgba(0,255,157,0.15)';
+      document.getElementById('player-count').textContent = data.error
+          ? '- 0/0 Spieler'
+          : ` ${data.players.online}/${data.players.max} Spieler`;
+
+      const playerTooltip = document.getElementById('player-tooltip');
+      if (data.players.sample && data.players.sample.length > 0) {
+          playerTooltip.innerHTML = data.players.sample
+              .map((player) => `<div>${player.name}</div>`)
+              .join('');
+      } else {
+          playerTooltip.innerHTML = 'No players online';
+      }
+
+      const statusTooltip = document.getElementById('status-tooltip');
+      if (!data.error && data.version && data.version.name) {
+          statusTooltip.textContent = `Version: ${data.version.name}`;
+      } else {
+          statusTooltip.textContent = 'Server is offline';
+      }
+
+      if (data.favicon) {
+          const serverIcon = document.querySelector('.server-icon');
+          serverIcon.style.backgroundImage = `url(${data.favicon})`;
+          serverIcon.style.backgroundSize = 'cover';
+      }
+  } catch (error) {
+      document.getElementById('server-title').textContent = 'Error';
+      document.getElementById('server-description').textContent = 'Could not fetch server data.';
+      document.getElementById('status-badge').textContent = '❌ Offline';
+      document.getElementById('status-badge').style.color = '#ff4b4b';
+      document.getElementById('status-badge').style.background = 'rgba(255,75,75,0.15)';
+      document.getElementById('player-count').textContent = '- 0/0 Spieler';
+      document.getElementById('player-tooltip').innerHTML = 'Server unreachable';
+      document.getElementById('status-tooltip').textContent = 'Could not fetch server version';
+  }
+}
+
+fetchServerData();
+setTimeout(fetchServerData, 1000 * 60 * 10);

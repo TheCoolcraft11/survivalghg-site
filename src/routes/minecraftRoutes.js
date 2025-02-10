@@ -55,4 +55,6 @@ router.delete(
   checkPermission("delete_backups", minecraftController.deleteBackup)
 );
 
+router.get('/api/query', minecraftController.getServerQuery);
+
 module.exports = router;

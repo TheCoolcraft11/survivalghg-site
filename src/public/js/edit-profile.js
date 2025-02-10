@@ -102,5 +102,5 @@ document
       .catch((error) => console.error("Error:", error));
   });
 document.querySelector(".back").addEventListener("click", () => {
-  window.location.href = "/profile.html";
+  window.location.href = "/profile";
 });

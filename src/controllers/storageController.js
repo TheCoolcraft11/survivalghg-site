@@ -9,8 +9,10 @@ const { getUserData } = require("../utils/userUtils");
 const BASE_URL = process.env.BASE_URL;
 
 const sharedFilesPath = path.join(__dirname, "../../data/sharedFiles.json");
+const groupDataPath = path.join(__dirname, "../../data/groupData.json");
 
 let sharedFiles = loadSharedFiles();
+let groupData = require(groupDataPath);
 
 function saveSharedFiles() {
   try {
@@ -57,6 +59,14 @@ function cleanupExpiredEntries() {
 }
 
 setInterval(cleanupExpiredEntries, 1000 * 60 * 60);
+
+function saveGroupData() {
+  try {
+    fs.writeFileSync(groupDataPath, JSON.stringify(groupData, null, 2));
+  } catch (err) {
+    console.error("Error saving group data:", err);
+  }
+}
 
 exports.uploadFiles = (req, res) => {
   const userRole = req.user.role;
@@ -428,4 +438,171 @@ exports.getSharedInfo = async (req, res) => {
 
   res.setHeader("Content-Type", "text/html");
   res.send(htmlContent);
+};
+
+exports.uploadGroupFiles = (req, res) => {
+  const groupName = req.params.groupName;
+  const userId = req.user.id;
+
+  if (!groupData.groups[groupName]) {
+    return res.status(403).json({ message: "Access denied: Invalid group" });
+  }
+
+  if (!groupData.groups[groupName].members.includes(userId)) {
+    return res
+      .status(403)
+      .json({ message: "Access denied: You are not a member of this group" });
+  }
+
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const groupUploadPath = path.join("uploads/group_storage", groupName);
+      fs.mkdirSync(groupUploadPath, { recursive: true });
+      cb(null, groupUploadPath);
+    },
+    filename: (req, file, cb) => {
+      const sanitizedFilename = path
+        .basename(file.originalname)
+        .normalize("NFKD")
+        .replace(/[^\w.-]/g, "");
+      const uniqueName = `${Date.now()}-${sanitizedFilename}`;
+      cb(null, uniqueName);
+    },
+  });
+
+  const upload = multer({ storage: storage }).array("files", 100);
+
+  upload(req, res, (err) => {
+    if (err) {
+      console.log(err);
+      return res
+        .status(400)
+        .json({ message: "Error uploading files: " + err.message });
+    }
+
+    res.status(200).json({
+      message: "Files uploaded successfully",
+      files: req.files.map((file) => file.filename),
+    });
+  });
+};
+
+async function getGroupStorageUsage(groupName) {
+  const groupUploadPath = path.join("uploads/group_storage", groupName);
+
+  if (!fs.existsSync(groupUploadPath)) {
+    return 0;
+  }
+
+  let totalSize = 0;
+  const files = fs.readdirSync(groupUploadPath);
+
+  files.forEach((file) => {
+    const filePath = path.join(groupUploadPath, file);
+    const stat = fs.statSync(filePath);
+    totalSize += stat.size;
+  });
+
+  return totalSize;
+}
+
+exports.createGroup = (req, res) => {
+  const { groupName } = req.body;
+  if (groupData.groups[groupName]) {
+    return res.status(400).json({ message: "Group already exists" });
+  }
+
+  groupData.groups[groupName] = {
+    members: [req.user.id],
+    files: [],
+  };
+
+  saveGroupData();
+  res.status(201).json({ message: "Group created successfully" });
+};
+
+exports.addUserToGroup = (req, res) => {
+  const { groupName } = req.params;
+  const { userId } = req.body;
+
+  if (!groupData.groups[groupName]) {
+    return res.status(404).json({ message: "Group not found" });
+  }
+
+  const numericUserId = parseInt(userId, 10);
+
+  if (!groupData.groups[groupName].members.includes(numericUserId)) {
+    groupData.groups[groupName].members.push(numericUserId);
+    saveGroupData();
+    return res.status(200).json({ message: "User added to group" });
+  } else {
+    return res.status(400).json({ message: "User already in group" });
+  }
+};
+
+exports.getGroupFiles = (req, res) => {
+  const { groupName } = req.params;
+  const userId = req.user.id;
+
+  if (!groupData.groups[groupName]) {
+    return res.status(404).json({ message: "Group not found" });
+  }
+
+  if (!groupData.groups[groupName].members.includes(userId)) {
+    return res
+      .status(403)
+      .json({ message: "Access denied: You are not a member of this group" });
+  }
+
+  const groupUploadPath = path.join("uploads/group_storage", groupName);
+
+  if (!fs.existsSync(groupUploadPath)) {
+    return res.status(200).json({ files: [] });
+  }
+
+  fs.readdir(groupUploadPath, (err, files) => {
+    if (err) {
+      console.error("Error reading group files:", err);
+      return res.status(500).json({ message: "Error reading group files" });
+    }
+
+    res.status(200).json({ files });
+  });
+};
+
+exports.getAllGroups = (req, res) => {
+  const userId = req.user.id;
+  const accessibleGroups = Object.keys(groupData.groups).filter((groupName) =>
+    groupData.groups[groupName].members.includes(userId)
+  );
+  res.status(200).json({ groups: accessibleGroups });
+};
+
+exports.downloadGroupFile = (req, res) => {
+  const { groupName, filename } = req.params;
+  const userId = req.user.id;
+
+  if (!groupData.groups[groupName]) {
+    return res.status(404).json({ message: "Group not found" });
+  }
+
+  if (!groupData.groups[groupName].members.includes(userId)) {
+    return res
+      .status(403)
+      .json({ message: "Access denied: You are not a member of this group" });
+  }
+
+  const groupUploadPath = path.join("uploads/group_storage", groupName);
+  const filePath = path.join(groupUploadPath, filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "File not found" });
+  }
+
+  res.download(filePath, filename, (err) => {
+    if (err) {
+      console.error("Error downloading file:", err);
+      res.status(500).json({ message: "Error downloading file" });
+    }
+  });
 };

@@ -568,3 +568,10 @@ window.addEventListener("scroll", handleScroll);
 
 fetchFiles();
 fetchStorageUsage();
+
+function switchToGroups() {
+  document.querySelector('main').classList.add('slide-out');
+  setTimeout(() => {
+    window.location.href = '/groups';
+  }, 300); 
+}

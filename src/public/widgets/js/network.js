@@ -23,10 +23,10 @@ function updateNetworkWidget(data) {
         <strong>Data Received:</strong> ${
           findBestUnit(iface.rx_bytes) || "0 B"
         }<br>
-        <strong>Upload Speed:</strong> ${
+        <strong>Current Upload:</strong> ${
           findBestUnit(iface.upload_speed) || "0 B"
         }/s<br>
-        <strong>Download Speed:</strong> ${
+        <strong>Current Download:</strong> ${
           findBestUnit(iface.download_speed) || "0 B"
         }/s
     `;
@@ -65,3 +65,23 @@ function waitForWebSocket(callback, interval = 100, maxAttempts = 50) {
 function initNetwork() {
   connectWebSocket(updateNetworkWidget);
 }
+
+document.getElementById('speedtest-button').addEventListener('click', function() {
+  const resultElement = document.getElementById('speedtest-result');
+  resultElement.innerText = 'Running speedtest...';
+
+  fetch('/api/speedtest', {
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("authToken")}`
+    } 
+  })
+      .then(response => response.json())
+      .then(data => {
+          resultElement.innerHTML = `
+          <strong class="speedtest-header">Upload:</strong> ${data.upload} MBits/s<br> <strong class="speedtest-header">Download:</strong> ${data.download} MBits/s<br><strong class="speedtest-header">Ping:</strong> ${data.ping} ms<br><strong class="speedtest-header">Distance:</strong> ${data.distance} km<br>`;
+      })
+      .catch(error => {
+          console.error('Error running speedtest:', error);
+          resultElement.innerText = 'Error running speedtest';
+      });
+});

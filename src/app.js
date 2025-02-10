@@ -14,6 +14,8 @@ const systemRoutes = require("./routes/systemRoutes");
 const setupWebsocket = require("./websocket/systemWebsocket");
 const tetrisRoutes = require("./routes/tetrisRoutes");
 const userRoutes = require("./routes/userRoutes");
+const { exiftool } = require("exiftool-vendored");
+
 const {
   requestLogger,
   errorLogger,
@@ -103,29 +105,44 @@ app.get("/profile", (req, res) => {
 });
 
 app.set("view engine", "ejs");
-app.get("/screenshots", (req, res) => {
-  const imagesDir = path.join(__dirname, "./uploads/screenshots");
+app.get("/screenshots", async (req, res) => {
+  const directoryPath = path.join(__dirname, "uploads/screenshots");
+  const images = fs.readdirSync(directoryPath);
 
-  fs.readdir(imagesDir, (err, files) => {
-    if (err) {
-      return res.status(500).send("Unable to scan directory: " + err);
-    }
-
-    const images = files.filter((file) => {
-      return (
-        file.endsWith(".jpg") ||
-        file.endsWith(".jpeg") ||
-        file.endsWith(".png") ||
-        file.endsWith(".gif")
-      );
-    });
-
-    res.render("screenshots", { images });
+  const imageDataPromises = images.map(async (file) => {
+    const filePath = path.join(directoryPath, file);
+    const metadata = await extractMetadata(filePath);
+    return { filename: file, metadata };
   });
+
+  const imageData = await Promise.all(imageDataPromises);
+  console.log(imageData);
+  res.render("screenshots", { images: imageData });
 });
+
+async function extractMetadata(filePath) {
+  try {
+    const metadata = await exiftool.read(filePath);
+    const userComment = metadata["UserComment"] || `{"message": "No comment"}`;
+    return {
+      userComment: JSON.parse(userComment),
+      uploadTime: metadata.FileModifyDate || "Unknown",
+    };
+  } catch (error) {
+    console.error("Error extracting metadata:", error);
+    return {
+      userComment: "Error reading metadata",
+      uploadTime: "Unknown",
+    };
+  }
+}
 
 app.get("/storage", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "storage.html"));
+});
+
+app.get("/groups", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "groups.html"));
 });
 
 app.get("/terminal", (req, res) => {
@@ -142,6 +159,10 @@ app.get("/users", (req, res) => {
 
 app.get("/widgets.json", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "widgets.json"));
+});
+
+app.get("/test2", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "test2.html"));
 });
 
 app.use("/images", express.static(path.join(__dirname, "public", "images")));

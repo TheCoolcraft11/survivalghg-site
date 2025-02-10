@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groups</title>
+    <link rel="stylesheet" href="./css/groups.css" />
+    <link rel="stylesheet" href="./css/navbar.css" />
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="nav-left">
+            <li><a href="/">Home</a></li>
+            <li><a href="/console">Server</a></li>
+            <li><a href="login">Login</a></li>
+            <li><a href="profile">Profile</a></li>
+            <li class="dropdown" id="moreDropdown">
+                <a class="active" href="#">More</a>
+                <div class="dropdown-content">
+                    <a class="active" href="storage">Storage</a>
+                    <a href="tetris">Tetris</a>
+                    <a href="cards">Cards</a>
+                    <a href="screenshots">Screenshots</a>
+                    <a href="about">About</a>
+                </div>
+            </li>
+            <li class="dropdown" id="adminDropdown" style="display: none;">
+                <a href="#">Admin Tools</a>
+                <div class="dropdown-content">
+                    <a href="terminal">Linux</a>
+                    <a href="users">Users</a>
+                    <a href="404">None</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+
+    <main class="container">
+        <div class="switch-section">
+            <button onclick="switchToStorage()" class="switch-btn">Switch to Storage</button>
+        </div>
+        <div id="group-management" class="section">
+            <h3>Gruppe erstellen</h3>
+            <input type="text" id="newGroupName" placeholder="Gruppenname" />
+            <button onclick="createGroup()">Gruppe erstellen</button>
+
+            <h3>Benutzer zur Gruppe hinzufügen</h3>
+            <input type="text" id="addUserGroupName" placeholder="Gruppenname" />
+            <input type="text" id="addUserId" placeholder="Benutzer-ID" />
+            <button onclick="addUserToGroup()">Benutzer hinzufügen</button>
+        </div>
+
+        <div id="group-upload-section" class="section">
+            <h3>Group-Upload</h3>
+            <select id="groupSelect">
+                <option value="">Select a Group</option>
+                <!-- Dynamically filled options -->
+            </select>
+            <input type="file" id="groupFiles" multiple />
+            <button onclick="uploadGroupFiles()">Dateien hochladen</button>
+        </div>
+
+        <div id="group-files-section" class="section">
+            <h3>Group Files</h3>
+            <select id="groupFilesSelect" onchange="fetchGroupFiles()">
+                <option value="">Select a Group</option>
+                <!-- Dynamically filled options -->
+            </select>
+            <ul id="groupFilesList" class="file-list"></ul>
+        </div>
+    </main>
+
+    <script src="./js/groups.js"></script>
+    <script src="./js/navbar.js"></script>
+</body>
+
+</html>

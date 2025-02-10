@@ -163,3 +163,66 @@ exports.getRandomScreenshot = (req, res) => {
     });
   });
 };
+
+exports.listScreenshots = async (req, res) => {
+  const imagesDir = path.join(process.cwd(), "./uploads/screenshots");
+
+  fs.readdir(imagesDir, async (err, files) => {
+    if (err) {
+      return res.status(500).send("Unable to scan directory: " + err);
+    }
+
+    const screenshots = await Promise.all(
+      files
+        .filter((file) => {
+          return (
+            file.endsWith(".jpg") ||
+            file.endsWith(".jpeg") ||
+            file.endsWith(".png") ||
+            file.endsWith(".gif")
+          );
+        })
+        .map(async (file) => {
+          const filePath = path.join(imagesDir, file);
+          const exiftool = new ExifTool();
+          let metaData = {};
+          let username = "Unknown";
+          let date = fs.statSync(filePath).mtime.getTime();
+          console.log("Timestamp:", date);
+
+          try {
+            const tags = await exiftool.read(filePath);
+            if (tags.UserComment) {
+              try {
+                metaData = JSON.parse(tags.UserComment);
+                username = metaData.username || "Unknown";
+              } catch (parseError) {
+                console.error("Error parsing UserComment:", parseError);
+              }
+            } else {
+              console.log("No UserComment found for file:", file);
+            }
+          } catch (err) {
+            console.error("Error reading metadata:", err);
+          } finally {
+            await exiftool.end();
+          }
+
+          let url = `${req.protocol}://${req.get("host")}/`.replace(/\/$/, "");
+
+          if (process.env.IMAGE_URL.includes(url)) {
+            url = process.env.IMAGE_URL.replace(/\/$/, "");
+          }
+
+          return {
+            filename: file,
+            url: `${url}/uploads/screenshots/${file}`,
+            metaData: metaData,
+            username: username,
+            date: date,
+          };
+        })
+    );
+    res.json(screenshots);
+  });
+};

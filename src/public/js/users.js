@@ -41,7 +41,11 @@ async function loadUsers() {
           user.id
         })" style="display:inline;">
                             <label for="role-${user.id}">Role:</label>
-                            <select id="role-${user.id}" name="role">
+                            <select id="role-${
+                              user.id
+                            }" name="role" onchange="toggleCustomRoleField(${
+          user.id
+        })">
                             <option value="admin" ${
                               user.role === "admin" ? "selected" : ""
                             }>Admin</option>
@@ -54,10 +58,32 @@ async function loadUsers() {
                             <option value="guest" ${
                               user.role === "guest" ? "selected" : ""
                             }>Guest</option>
-                            <option value="kirill" ${
-                              user.role === "kirill" ? "selected" : ""
-                            }>Kirill</option>
+                            <option value="member" ${
+                              user.role === "member" ? "selected" : ""
+                            }>Member</option>
+                            <option value="other" ${
+                              ![
+                                "admin",
+                                "user",
+                                "moderator",
+                                "guest",
+                                "member",
+                              ].includes(user.role)
+                                ? "selected"
+                                : ""
+                            }>Other</option>
                             </select>
+                            <input type="text" id="custom-role-${
+                              user.id
+                            }" name="custom-role" placeholder="Enter custom role" style="display: ${
+          !["admin", "user", "moderator", "guest", "member"].includes(user.role)
+            ? "block"
+            : "none"
+        };" value="${
+          !["admin", "user", "moderator", "guest", "member"].includes(user.role)
+            ? user.role
+            : ""
+        }">
                             <button type="submit">Change Role</button>
                         </form>
                         <form onsubmit="submitPassword(event, ${
@@ -166,6 +192,10 @@ async function submitRole(event, userId) {
   event.preventDefault();
 
   const role = document.getElementById(`role-${userId}`).value;
+  const customRole =
+    role === "other"
+      ? document.getElementById(`custom-role-${userId}`).value
+      : null;
 
   try {
     const token = sessionStorage.getItem("authToken");
@@ -180,7 +210,7 @@ async function submitRole(event, userId) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ method: "role", role }),
+      body: JSON.stringify({ method: "role", role, customRole }),
     });
 
     const result = await response.json();
@@ -248,6 +278,18 @@ async function changePassword(id, newPassword) {
     }
   } else {
     console.error("No auth token found");
+  }
+}
+
+function toggleCustomRoleField(userId) {
+  const roleSelect = document.getElementById(`role-${userId}`);
+  const customRoleInput = document.getElementById(`custom-role-${userId}`);
+  if (roleSelect.value === "other") {
+    customRoleInput.style.display = "block";
+    customRoleInput.required = true;
+  } else {
+    customRoleInput.style.display = "none";
+    customRoleInput.required = false;
   }
 }
 

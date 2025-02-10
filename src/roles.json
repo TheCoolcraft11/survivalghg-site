@@ -19,7 +19,8 @@
         "upload",
         "delete",
         "share",
-        "delete-screenshot"
+        "delete-screenshot",
+        "run_speedtest"
       ],
       "storageLimit": -1
     },
@@ -39,19 +40,13 @@
       "storageLimit": 100
     },
     "user": {
-      "description": "Basic user access for starting/stopping their Minecraft server, downloading backups, and viewing server status.",
-      "permissions": [
-        "view_backups",
-        "download_backups",
-        "start_server",
-        "stop_server",
-        "view_server_status"
-      ],
+      "description": "Basic user access for starting the Minecraft server and viewing server status.",
+      "permissions": ["start_server", "view_server_status"],
       "storageLimit": 100
     },
     "guest": {
-      "description": "Read-only access. Guests can view backups and check server status but cannot download backups or control the server.",
-      "permissions": ["view_backups", "view_server_status"],
+      "description": "Read-only access. Guests can start server and view status but cant store files.",
+      "permissions": ["view_server_status", "start_server"],
       "storageLimit": 0
     },
     "backup_manager": {
@@ -76,8 +71,8 @@
       ],
       "storageLimit": 1000
     },
-    "kirill": {
-      "description": "Custom role with specific permissions for unique needs.",
+    "member": {
+      "description": "Member of Minecraft server. Can upload and delete files, view backups, and start the server",
       "permissions": [
         "view_backups",
         "download_backups",

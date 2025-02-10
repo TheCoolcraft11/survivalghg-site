@@ -1,4 +1,7 @@
 const si = require('systeminformation');
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
 
 exports.getSystemInfo = async (req, res) => {
     try {
@@ -88,3 +91,28 @@ exports.getTopProcesses =  (req, res) => {
         res.json(topProcesses);
     });
 }
+
+exports.runSpeedTest = async (req, res) => {
+    try {
+        const { stdout, stderr } = await execAsync('speedtest');
+        if (stderr) {
+            console.error(`Speedtest error output: ${stderr}`);
+            return res.status(500).json({ error: 'Speedtest encountered an error' });
+        }
+        const downloadMatch = stdout.match(/Download:\s+([\d.]+)\s+Mbit\/s/);
+        const uploadMatch = stdout.match(/Upload:\s+([\d.]+)\s+Mbit\/s/);
+        const pingMatch = stdout.match(/Hosted by .+ \[(\d+\.\d+)\s+km\]:\s+([\d.]+)\s+ms/);
+
+        const result = {
+            download: downloadMatch ? downloadMatch[1] : 'N/A',
+            upload: uploadMatch ? uploadMatch[1] : 'N/A',
+            ping: pingMatch ? pingMatch[2] : 'N/A',
+            distance: pingMatch ? pingMatch[1] : 'N/A',
+        };
+
+        res.json(result);
+    } catch (error) {
+        console.error(`Error executing speedtest: ${error}`);
+        res.status(500).json({ error: 'Failed to run speedtest' });
+    }
+};
